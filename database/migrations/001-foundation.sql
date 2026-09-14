@@ -1,0 +1,2 @@
+-- Reference migration for the Electron main-process migration runner.
+-- Runtime migrations are kept in electron/main/database/migrations.ts.

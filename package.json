@@ -1,0 +1,28 @@
+{
+  "name": "fahmy-steel-pos",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist-electron/electron/main/index.js",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.electron.json && vite build",
+    "verify:database": "node scripts/verify-database.mjs"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "better-sqlite3": "latest",
+    "electron": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-router-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/better-sqlite3": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest"
+  }
+}

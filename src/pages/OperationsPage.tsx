@@ -76,22 +76,22 @@ export function OperationsPage() {
 
       <form className="panel-form" onSubmit={handleOpenShift}>
         <div className="form-grid">
-          <label>Opening cash (EGP)<input type="number" min="0" step="0.01" value={openingCash} onChange={(event) => setOpeningCash(event.target.value)} /></label>
+          <label>Opening cash (EGP)<input className="fs-input" type="number" min="0" step="0.01" value={openingCash} onChange={(event) => setOpeningCash(event.target.value)} /></label>
         </div>
         {error && <p className="auth-error">{error}</p>}
-        <button className="auth-submit" type="submit" disabled={saving || Boolean(openShift)}>{saving ? 'Saving...' : openShift ? 'Shift already open' : 'Open cashier shift'}</button>
+        <button className="fs-btn-primary" type="submit" disabled={saving || Boolean(openShift)}>{saving ? 'Saving...' : openShift ? 'Shift already open' : 'Open cashier shift'}</button>
       </form>
 
       <div className="panel-form">
         <div className="form-grid">
-          <label>Closing cash (EGP)<input type="number" min="0" step="0.01" value={closingCash} onChange={(event) => setClosingCash(event.target.value)} /></label>
-          <label>Expected cash (EGP)<input type="number" min="0" step="0.01" value={expectedCash} onChange={(event) => setExpectedCash(event.target.value)} /></label>
-          <label className="full-width">Closing notes<textarea value={closingNotes} onChange={(event) => setClosingNotes(event.target.value)} /></label>
+          <label>Closing cash (EGP)<input className="fs-input" type="number" min="0" step="0.01" value={closingCash} onChange={(event) => setClosingCash(event.target.value)} /></label>
+          <label>Expected cash (EGP)<input className="fs-input" type="number" min="0" step="0.01" value={expectedCash} onChange={(event) => setExpectedCash(event.target.value)} /></label>
+          <label className="full-width">Closing notes<textarea className="fs-input" value={closingNotes} onChange={(event) => setClosingNotes(event.target.value)} /></label>
         </div>
-        <button className="auth-submit" type="button" onClick={() => void handleCloseShift()} disabled={saving || !openShift}>{saving ? 'Closing...' : openShift ? 'Close cashier shift' : 'No open shift'}</button>
+        <button className="fs-btn-primary" type="button" onClick={() => void handleCloseShift()} disabled={saving || !openShift}>{saving ? 'Closing...' : openShift ? 'Close cashier shift' : 'No open shift'}</button>
       </div>
 
-      <div className="table-panel">
+      <div className="fs-table-container">
         <div className="table-toolbar"><strong>Cashier shifts</strong></div>
         <table>
           <thead>
@@ -117,7 +117,7 @@ export function OperationsPage() {
         </table>
       </div>
 
-      <div className="table-panel">
+      <div className="fs-table-container">
         <div className="table-toolbar"><strong>Audit log</strong></div>
         <table>
           <thead>

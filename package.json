@@ -16,12 +16,14 @@
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-router-dom": "latest"
+    "react-router-dom": "latest",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
-    "@types/react": "latest",
     "@types/better-sqlite3": "latest",
+    "@types/react": "latest",
     "@types/react-dom": "latest",
+    "electron-builder": "^26.15.3",
     "typescript": "latest",
     "vite": "latest"
   }

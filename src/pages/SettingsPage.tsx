@@ -85,14 +85,14 @@ export function SettingsPage() {
 
       <form className="panel-form" onSubmit={handleSave}>
         <div className="form-grid">
-          <label>Company name<input value={companyName} onChange={(event) => setCompanyName(event.target.value)} /></label>
-          <label>Workday start<input value={workdayStart} onChange={(event) => setWorkdayStart(event.target.value)} /></label>
+          <label>Company name<input className="fs-input" value={companyName} onChange={(event) => setCompanyName(event.target.value)} /></label>
+          <label>Workday start<input className="fs-input" value={workdayStart} onChange={(event) => setWorkdayStart(event.target.value)} /></label>
         </div>
         {error && <p className="auth-error">{error}</p>}
-        <button className="auth-submit" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save settings'}</button>
+        <button className="fs-btn-primary" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save settings'}</button>
       </form>
 
-      <div className="table-panel">
+      <div className="fs-table-container">
         <div className="table-toolbar"><strong>Saved values</strong></div>
         <table>
           <thead>
@@ -114,10 +114,10 @@ export function SettingsPage() {
         </table>
       </div>
 
-      <div className="table-panel">
+      <div className="fs-table-container">
         <div className="table-toolbar">
           <strong>Offline backups</strong>
-          <button className="tiny-button" type="button" onClick={() => void handleCreateBackup()} disabled={backupBusy}>
+          <button className="fs-btn-secondary" type="button" onClick={() => void handleCreateBackup()} disabled={backupBusy}>
             {backupBusy ? 'Working...' : 'Create backup'}
           </button>
         </div>
@@ -137,7 +137,7 @@ export function SettingsPage() {
                 <td>{backup.createdAt}</td>
                 <td>{Math.ceil(backup.sizeBytes / 1024)} KB</td>
                 <td>
-                  <button className="tiny-button" type="button" onClick={() => void handleRestoreBackup(backup)} disabled={backupBusy}>
+                  <button className="fs-btn-secondary" type="button" onClick={() => void handleRestoreBackup(backup)} disabled={backupBusy}>
                     Restore
                   </button>
                 </td>

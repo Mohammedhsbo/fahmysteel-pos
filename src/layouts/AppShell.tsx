@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react';
-import { BarChart3, Boxes, ChevronDown, ClipboardList, LayoutDashboard, LogOut, PackageSearch, Settings, ShoppingCart, Users, WalletCards } from 'lucide-react';
+import { BarChart3, Bell, Boxes, ChevronDown, ClipboardList, LayoutDashboard, LogOut, PackageSearch, Search, Settings, ShoppingCart, Users, WalletCards } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import type { SessionUser, SupportedLocale } from '../../shared/api';
 import { useI18n } from '../i18n';
@@ -33,8 +33,8 @@ export function AppShell({ appName, session, locale, onLocaleChange, onLogout, c
     <div className="shell">
       <aside className="sidebar">
         <div className="brand-lockup">
-          <div className="brand-mark">FS</div>
-          <div><p className="brand-name">{appName}</p><p className="brand-caption">{t('steelOperations')}</p></div>
+          <div className="brand-mark">ف</div>
+          <div><p className="brand-name">{appName}</p><p className="brand-caption">FAHMY STEEL</p></div>
         </div>
         <nav className="primary-nav" aria-label="Primary navigation">
           <p className="nav-label">{t('workspace')}</p>
@@ -45,6 +45,7 @@ export function AppShell({ appName, session, locale, onLocaleChange, onLogout, c
           ))}
         </nav>
         <div className="sidebar-footer">
+          
           {session.role === 'ADMIN' && <>
             <NavLink to="/accounts" className="nav-item"><Users size={18} strokeWidth={1.8} /><span>{t('accounts')}</span></NavLink>
             <NavLink to="/settings" className="nav-item"><Settings size={18} strokeWidth={1.8} /><span>{t('settings')}</span></NavLink>
@@ -55,13 +56,20 @@ export function AppShell({ appName, session, locale, onLocaleChange, onLogout, c
       <main className="main-content">
         <header className="topbar">
           <div className="breadcrumb"><span>{t('workspace')}</span><span className="breadcrumb-separator">/</span><strong>{t('overview')}</strong></div>
-          <div className="topbar-actions">
-            <div className="select-wrap">
-              <select aria-label="Language" value={locale} onChange={(event) => onLocaleChange(event.target.value as SupportedLocale)}>
-                <option value="en">English</option><option value="ar">العربية</option>
-              </select><ChevronDown size={14} />
+          <div className="topbar-center">
+            <div className="search-bar">
+              <Search size={18} strokeWidth={2} />
+              <input type="text" placeholder={locale === 'ar' ? 'بحث سريع عن فاتورة أو عميل أو صنف...' : 'Quick search...'} />
             </div>
-            <div className="user-chip"><div className="avatar">{session.displayName.charAt(0).toUpperCase()}</div><div><strong>{session.displayName}</strong><span>{session.role}</span></div></div>
+          </div>
+          <div className="topbar-actions">
+            <div className="lang-switch">
+              <button type="button" className={locale === 'en' ? 'active' : ''} onClick={() => onLocaleChange('en')}>EN</button>
+              <button type="button" className={locale === 'ar' ? 'active' : ''} onClick={() => onLocaleChange('ar')}>عربي</button>
+            </div>
+            <button className="icon-btn" aria-label="Notifications" type="button">
+              <Bell size={18} />
+            </button>
           </div>
         </header>
         <div className="page-content">{children}</div>

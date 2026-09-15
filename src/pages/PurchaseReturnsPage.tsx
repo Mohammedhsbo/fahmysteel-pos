@@ -68,18 +68,18 @@ export function PurchaseReturnsPage() {
 
       <form className="panel-form" onSubmit={handleSubmit}>
         <div className="form-grid">
-          <label>Original invoice ID<input type="number" min="1" value={invoiceId} onChange={(event) => setInvoiceId(event.target.value)} /></label>
-          <label>Supplier ID<input type="number" min="1" value={supplierId} onChange={(event) => setSupplierId(event.target.value)} /></label>
-          <label>Original item ID<input type="number" min="1" value={originalItemId} onChange={(event) => setOriginalItemId(event.target.value)} /></label>
-          <label>Quantity<input type="number" min="0.01" step="0.01" value={quantity} onChange={(event) => setQuantity(event.target.value)} /></label>
-          <label>Refund amount (EGP)<input type="number" min="0" step="0.01" value={refund} onChange={(event) => setRefund(event.target.value)} /></label>
-          <label className="full-width">Reason<textarea value={reason} onChange={(event) => setReason(event.target.value)} /></label>
+          <label>Original invoice ID<input className="fs-input" type="number" min="1" value={invoiceId} onChange={(event) => setInvoiceId(event.target.value)} /></label>
+          <label>Supplier ID<input className="fs-input" type="number" min="1" value={supplierId} onChange={(event) => setSupplierId(event.target.value)} /></label>
+          <label>Original item ID<input className="fs-input" type="number" min="1" value={originalItemId} onChange={(event) => setOriginalItemId(event.target.value)} /></label>
+          <label>Quantity<input className="fs-input" type="number" min="0.01" step="0.01" value={quantity} onChange={(event) => setQuantity(event.target.value)} /></label>
+          <label>Refund amount (EGP)<input className="fs-input" type="number" min="0" step="0.01" value={refund} onChange={(event) => setRefund(event.target.value)} /></label>
+          <label className="full-width">Reason<textarea className="fs-input" value={reason} onChange={(event) => setReason(event.target.value)} /></label>
         </div>
         {error && <p className="auth-error">{error}</p>}
-        <button className="auth-submit" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Create purchase return'}</button>
+        <button className="fs-btn-primary" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Create purchase return'}</button>
       </form>
 
-      <div className="table-panel">
+      <div className="fs-table-container">
         <div className="table-toolbar"><strong>Supplier returns</strong></div>
         <table>
           <thead><tr><th>Return #</th><th>Invoice</th><th>Supplier</th><th>Created by</th><th>Refund</th><th>Returned</th></tr></thead>

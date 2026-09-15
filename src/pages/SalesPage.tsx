@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
 import type { CatalogProduct } from '../../shared/catalog';
 import type { CustomerRecord } from '../../shared/contacts';
 import type { SalesInvoice } from '../../shared/sales';
 import { useI18n } from '../i18n';
 
-const emptyLine = {
-  productId: 0,
-  quantity: 1,
-};
+function formatMoney(amountCents: number): string {
+  return `${(amountCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ج.م`;
+}
 
 export function SalesPage() {
   const { t } = useI18n();
@@ -24,6 +24,7 @@ export function SalesPage() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [printingId, setPrintingId] = useState<number | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     void Promise.all([loadInvoices(), loadProducts(), loadCustomers(), loadPaymentMethods()]);
@@ -67,13 +68,11 @@ export function SalesPage() {
       setError('Select a product first.');
       return;
     }
-
     const selectedProduct = products.find((product) => product.id === lineProductId);
     if (!selectedProduct) {
       setError('Selected product was not found.');
       return;
     }
-
     if (quantity <= 0) {
       setError('Quantity must be greater than zero.');
       return;
@@ -94,7 +93,6 @@ export function SalesPage() {
         productName: selectedProduct.name,
       }]);
     }
-
     setError('');
     setLineProductId(0);
     setQuantity(1);
@@ -106,14 +104,11 @@ export function SalesPage() {
       setError('Add at least one product to the sale.');
       return;
     }
-
     setSaving(true);
     setError('');
-
     try {
       const session = await window.api.auth.getSession();
       if (!session) throw new Error('No active cashier session found.');
-
       await window.api.sales.createSalesInvoice({
         customerId,
         cashierId: session.id,
@@ -126,12 +121,12 @@ export function SalesPage() {
           discountCents: 0,
         })),
       });
-
       setItems([]);
       setCustomerId(null);
       setNotes('');
       setLineProductId(0);
       setQuantity(1);
+      setShowForm(false);
       await loadInvoices();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Unable to record sale.');
@@ -152,102 +147,126 @@ export function SalesPage() {
     }
   }
 
+  function getStatusBadge(status: string) {
+    switch(status?.toLowerCase()) {
+      case 'paid':
+      case 'مدفوعة':
+        return <span className="fs-badge success">مدفوعة</span>;
+      case 'unpaid':
+      case 'غير مدفوعة':
+        return <span className="fs-badge danger">غير مدفوعة</span>;
+      case 'partial':
+      case 'جزئي':
+        return <span className="fs-badge warning">جزئي</span>;
+      default:
+        return <span className="fs-badge gray">{status}</span>;
+    }
+  }
+
   return (
     <section className="catalog-page">
       <div className="page-heading">
-        <div>
-          <p className="eyebrow">Operational workflow</p>
-          <h1>{t('sales')}</h1>
-          <p className="heading-copy">Create local sales transactions while keeping inventory and cash movement in sync.</p>
+        <div className="page-title">
+          <h1>المبيعات</h1>
+          <p className="subtitle">{invoices.length} فاتورة</p>
         </div>
+        <button className="fs-btn-primary" type="button" onClick={() => setShowForm(!showForm)}>
+          <Plus size={18} /> فاتورة جديدة
+        </button>
       </div>
 
-      <form className="panel-form" onSubmit={handleSubmit}>
-        <div className="form-grid">
-          <label>Customer
-            <select value={customerId ?? ''} onChange={(event) => setCustomerId(Number(event.target.value) || null)}>
-              <option value="">Walk-in customer</option>
-              {customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name}</option>)}
-            </select>
-          </label>
-          <label>Product
-            <select value={lineProductId} onChange={(event) => setLineProductId(Number(event.target.value))}>
-              <option value={0}>-- Select product --</option>
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>{product.name}</option>
-              ))}
-            </select>
-          </label>
-          <label>Quantity<input type="number" min={1} value={quantity} onChange={(event) => setQuantity(Number(event.target.value) || 1)} /></label>
-          <label>Payment method<select value={paymentMethodId} onChange={(event) => setPaymentMethodId(Number(event.target.value))}>
-            {paymentMethods.map((method) => <option key={method.id} value={method.id}>{method.name}</option>)}
-          </select></label>
-          <button type="button" className="auth-submit" style={{ marginTop: 22 }} onClick={addLine}>Add line</button>
-          <label className="full-width">Notes<textarea value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
-        </div>
+      {showForm && (
+        <form className="panel-form" onSubmit={handleSubmit} style={{ marginBottom: 32 }}>
+          <div className="form-grid">
+            <label>العميل
+              <select className="fs-select" value={customerId ?? ''} onChange={(event) => setCustomerId(Number(event.target.value) || null)}>
+                <option value="">عميل نقدي</option>
+                {customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name}</option>)}
+              </select>
+            </label>
+            <label>المنتج
+              <select className="fs-select" value={lineProductId} onChange={(event) => setLineProductId(Number(event.target.value))}>
+                <option value={0}>-- اختر المنتج --</option>
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>{product.name}</option>
+                ))}
+              </select>
+            </label>
+            <label>الكمية<input className="fs-input" type="number" min={1} value={quantity} onChange={(event) => setQuantity(Number(event.target.value) || 1)} /></label>
+            <label>طريقة الدفع<select className="fs-select" value={paymentMethodId} onChange={(event) => setPaymentMethodId(Number(event.target.value))}>
+              {paymentMethods.map((method) => <option key={method.id} value={method.id}>{method.name}</option>)}
+            </select></label>
+            <button type="button" className="fs-btn-secondary" style={{ marginTop: 22 }} onClick={addLine}>إضافة صنف</button>
+            <label className="full-width">ملاحظات<textarea className="fs-input" value={notes} onChange={(event) => setNotes(event.target.value)} rows={2} /></label>
+          </div>
 
-        {error && <p className="auth-error">{error}</p>}
+          {error && <p className="auth-error" style={{ marginTop: 16 }}>{error}</p>}
 
-        <div className="table-panel" style={{ marginTop: 18 }}>
-          <div className="table-toolbar"><strong>Current sale</strong></div>
-          <table>
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Unit</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 ? (
-                <tr><td colSpan={4}>No items added yet.</td></tr>
-              ) : items.map((item) => (
-                <tr key={item.productId}>
-                  <td>{item.productName}</td>
-                  <td>{item.quantity}</td>
-                  <td>{item.unitPriceCents}</td>
-                  <td>{item.quantity * item.unitPriceCents}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+          {items.length > 0 && (
+            <div className="fs-table-container" style={{ marginTop: 24 }}>
+              <div className="table-toolbar"><strong>الأصناف المضافة</strong></div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>المنتج</th>
+                    <th>الكمية</th>
+                    <th>سعر الوحدة</th>
+                    <th>الإجمالي</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.productId}>
+                      <td>{item.productName}</td>
+                      <td>{item.quantity}</td>
+                      <td>{formatMoney(item.unitPriceCents)}</td>
+                      <td>{formatMoney(item.quantity * item.unitPriceCents)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24, fontSize: 16, fontWeight: 700, padding: '16px 0', borderTop: '1px solid var(--fs-border-soft)' }}>
+            <span>الإجمالي الكلي:</span>
+            <span>{formatMoney(totals.total)}</span>
+          </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 18, fontSize: 13, color: '#3b3b34' }}>
-          <strong>Subtotal</strong>
-          <span>{totals.subtotal}</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 13, color: '#3b3b34' }}>
-          <strong>Total</strong>
-          <span>{totals.total}</span>
-        </div>
+          <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+            <button className="fs-btn-primary" type="submit" disabled={saving}>{saving ? 'جاري الحفظ...' : 'حفظ الفاتورة'}</button>
+            <button className="fs-btn-secondary" type="button" onClick={() => setShowForm(false)}>إلغاء</button>
+          </div>
+        </form>
+      )}
 
-        <button className="auth-submit" type="submit" disabled={saving} style={{ marginTop: 18 }}>{saving ? 'Recording sale...' : 'Record sale'}</button>
-      </form>
-
-      <div className="table-panel">
-        <div className="table-toolbar">
-          <strong>Recent invoices</strong>
-        </div>
+      <div className="fs-table-container">
         <table>
           <thead>
             <tr>
-              <th>Invoice</th>
-              <th>Status</th>
-              <th>Customer</th>
-              <th>Total</th>
-              <th>Action</th>
+              <th>رقم الفاتورة</th>
+              <th>العميل</th>
+              <th>التاريخ</th>
+              <th>الإجمالي</th>
+              <th>الحالة</th>
+              <th>إجراء</th>
             </tr>
           </thead>
           <tbody>
-            {invoices.map((invoice) => (
+            {invoices.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', color: '#7a8691', padding: '40px 0' }}>لا توجد فواتير</td></tr>
+            ) : invoices.map((invoice) => (
               <tr key={invoice.id}>
                 <td>{invoice.invoiceNumber}</td>
-                <td>{invoice.status}</td>
-                <td>{invoice.customerName ?? 'Walk-in'}</td>
-                <td>{invoice.totalCents}</td>
-                <td><button type="button" className="tiny-button" onClick={() => void handlePrint(invoice.id)} disabled={printingId === invoice.id}>{printingId === invoice.id ? 'Printing...' : 'Print'}</button></td>
+                <td>{invoice.customerName ?? 'عميل نقدي'}</td>
+                <td>{new Date(invoice.createdAt || Date.now()).toISOString().split('T')[0]}</td>
+                <td style={{ fontWeight: 700 }}>{formatMoney(invoice.totalCents)}</td>
+                <td>{getStatusBadge(invoice.status)}</td>
+                <td>
+                  <button type="button" className="quiet-button" onClick={() => void handlePrint(invoice.id)} disabled={printingId === invoice.id}>
+                    {printingId === invoice.id ? '...' : 'طباعة'}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

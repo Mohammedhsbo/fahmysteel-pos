@@ -85,30 +85,30 @@ export function AccountManagementPage() {
 
       <form className="panel-form" onSubmit={handleSubmit}>
         <div className="form-grid">
-          <label>Username<input value={pending.username} onChange={(event) => setPending({ ...pending, username: event.target.value })} /></label>
-          <label>Display name<input value={pending.displayName} onChange={(event) => setPending({ ...pending, displayName: event.target.value })} /></label>
-          <label>Password<input type="password" value={pending.password} onChange={(event) => setPending({ ...pending, password: event.target.value })} /></label>
-          <label>Role<select value={pending.role} onChange={(event) => setPending({ ...pending, role: event.target.value as 'ADMIN' | 'CASHIER' })}>
+          <label>Username<input className="fs-input" value={pending.username} onChange={(event) => setPending({ ...pending, username: event.target.value })} /></label>
+          <label>Display name<input className="fs-input" value={pending.displayName} onChange={(event) => setPending({ ...pending, displayName: event.target.value })} /></label>
+          <label>Password<input className="fs-input" type="password" value={pending.password} onChange={(event) => setPending({ ...pending, password: event.target.value })} /></label>
+          <label>Role<select className="fs-select" value={pending.role} onChange={(event) => setPending({ ...pending, role: event.target.value as 'ADMIN' | 'CASHIER' })}>
             <option value="CASHIER">Cashier</option>
             <option value="ADMIN">Administrator</option>
           </select></label>
         </div>
         {error && <p className="auth-error">{error}</p>}
-        <button className="auth-submit" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Create user'}</button>
+        <button className="fs-btn-primary" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Create user'}</button>
       </form>
 
       <form className="panel-form" onSubmit={handlePasswordReset}>
         <div className="form-grid">
-          <label>User<select value={resetUserId} onChange={(event) => setResetUserId(Number(event.target.value))}>
+          <label>User<select className="fs-select" value={resetUserId} onChange={(event) => setResetUserId(Number(event.target.value))}>
             <option value={0}>Select user</option>
             {sortedUsers.map((user) => <option key={user.id} value={user.id}>{user.displayName} ({user.username})</option>)}
           </select></label>
-          <label>New password<input type="password" minLength={8} value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} /></label>
+          <label>New password<input className="fs-input" type="password" minLength={8} value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} /></label>
         </div>
-        <button className="auth-submit" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Reset password'}</button>
+        <button className="fs-btn-primary" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Reset password'}</button>
       </form>
 
-      <div className="table-panel">
+      <div className="fs-table-container">
         <div className="table-toolbar"><strong>User accounts</strong></div>
         <table>
           <thead>
@@ -129,7 +129,7 @@ export function AccountManagementPage() {
                 <td>{user.role}</td>
                 <td>{user.isActive ? 'Active' : 'Disabled'}</td>
                 <td>{user.lastLoginAt ?? 'Never'}</td>
-                <td><button type="button" className="tiny-button" onClick={() => void handleToggleActivation(user)}>{user.isActive ? 'Disable' : 'Enable'}</button> <button type="button" className="tiny-button" onClick={() => setResetUserId(user.id)}>Reset password</button></td>
+                <td><button type="button" className="fs-btn-secondary" onClick={() => void handleToggleActivation(user)}>{user.isActive ? 'Disable' : 'Enable'}</button> <button type="button" className="fs-btn-secondary" onClick={() => setResetUserId(user.id)}>Reset password</button></td>
               </tr>
             ))}
           </tbody>

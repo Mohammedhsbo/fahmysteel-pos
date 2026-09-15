@@ -59,18 +59,18 @@ export function InventoryAdjustmentsPage() {
 
       <form className="panel-form" onSubmit={handleSubmit}>
         <div className="form-grid">
-          <label>Product<select value={productId} onChange={(event) => setProductId(event.target.value)}>
+          <label>Product<select className="fs-select" value={productId} onChange={(event) => setProductId(event.target.value)}>
             <option value="">Select product</option>
             {products.map((product) => <option key={product.id} value={product.id}>{product.name} ({product.currentStockQuantity})</option>)}
           </select></label>
-          <label>Quantity change<input type="number" step="0.01" value={quantityDelta} onChange={(event) => setQuantityDelta(event.target.value)} placeholder="Positive or negative" /></label>
-          <label className="full-width">Reason<textarea value={reason} onChange={(event) => setReason(event.target.value)} /></label>
+          <label>Quantity change<input className="fs-input" type="number" step="0.01" value={quantityDelta} onChange={(event) => setQuantityDelta(event.target.value)} placeholder="Positive or negative" /></label>
+          <label className="full-width">Reason<textarea className="fs-input" value={reason} onChange={(event) => setReason(event.target.value)} /></label>
         </div>
         {error && <p className="auth-error">{error}</p>}
-        <button className="auth-submit" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Apply adjustment'}</button>
+        <button className="fs-btn-primary" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Apply adjustment'}</button>
       </form>
 
-      <div className="table-panel">
+      <div className="fs-table-container">
         <div className="table-toolbar"><strong>Adjustment history</strong></div>
         <table>
           <thead><tr><th>Product</th><th>Change</th><th>Reason</th><th>Created by</th><th>Created</th></tr></thead>

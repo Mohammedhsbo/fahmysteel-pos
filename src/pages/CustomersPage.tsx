@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Plus, Users, Clock, Wallet } from 'lucide-react';
 import type { CustomerRecord } from '../../shared/contacts';
 import { useI18n } from '../i18n';
 
@@ -18,6 +19,7 @@ export function CustomersPage() {
   const [editingCustomerId, setEditingCustomerId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     void window.api.auth.getSession().then((session) => setIsAdmin(session?.role === 'ADMIN'));
@@ -60,6 +62,7 @@ export function CustomersPage() {
       }
       setPending(emptyCustomer);
       setEditingCustomerId(null);
+      setShowForm(false);
       await loadCustomers();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'Unable to save customer.');
@@ -69,6 +72,7 @@ export function CustomersPage() {
   }
 
   async function handleArchive(customerId: number) {
+    if (!window.confirm('هل أنت متأكد من أرشفة هذا العميل؟')) return;
     try {
       await window.api.customers.archiveCustomer(customerId);
       await loadCustomers();
@@ -85,60 +89,109 @@ export function CustomersPage() {
       address: customer.address ?? '',
       notes: customer.notes ?? '',
     });
+    setShowForm(true);
     setError('');
   }
 
   function handleCancelEdit() {
     setEditingCustomerId(null);
     setPending(emptyCustomer);
+    setShowForm(false);
     setError('');
   }
 
   return (
     <section className="catalog-page">
       <div className="page-heading">
-        <div>
-          <p className="eyebrow">Next phase</p>
-          <h1>{t('customers')}</h1>
-          <p className="heading-copy">Offline customer master records are managed in the local SQLite database.</p>
+        <div className="page-title">
+          <h1>العملاء</h1>
+          <p className="subtitle">متابعة أرصدة العملاء والمديونيات</p>
         </div>
+        {isAdmin && (
+          <button className="fs-btn-primary" type="button" onClick={() => setShowForm(!showForm)}>
+            <Plus size={18} /> {showForm ? 'إلغاء' : 'عميل جديد'}
+          </button>
+        )}
       </div>
 
-      {isAdmin && <form className="panel-form" onSubmit={handleSubmit}>
-        <div className="form-grid">
-          <label>Name<input value={pending.name} onChange={(event) => setPending({ ...pending, name: event.target.value })} /></label>
-          <label>Phone<input value={pending.phone} onChange={(event) => setPending({ ...pending, phone: event.target.value })} /></label>
-          <label className="full-width">Address<textarea value={pending.address} onChange={(event) => setPending({ ...pending, address: event.target.value })} /></label>
-          <label className="full-width">Notes<textarea value={pending.notes} onChange={(event) => setPending({ ...pending, notes: event.target.value })} /></label>
-        </div>
-        {error && <p className="auth-error">{error}</p>}
-        <button className="auth-submit" type="submit" disabled={saving}>{saving ? 'Saving...' : editingCustomerId === null ? 'Create customer' : 'Save customer'}</button>
-        {editingCustomerId !== null && <button className="tiny-button" type="button" onClick={handleCancelEdit}>Cancel edit</button>}
-      </form>}
+      <div className="metric-grid" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+        <article className="metric-card">
+          <div className="metric-card-header">
+            <p>إجمالي العملاء</p>
+            <div className="metric-icon blue"><Users size={20} /></div>
+          </div>
+          <div>
+            <h2>{customers.length}</h2>
+          </div>
+        </article>
 
-      <div className="table-panel">
+        <article className="metric-card">
+          <div className="metric-card-header">
+            <p>العملاء الآجل</p>
+            <div className="metric-icon"><Clock size={20} /></div>
+          </div>
+          <div>
+            <h2>{/* Placeholder until backend provides this */ 0}</h2>
+          </div>
+        </article>
+
+        <article className="metric-card">
+          <div className="metric-card-header">
+            <p>إجمالي المديونية</p>
+            <div className="metric-icon" style={{ color: '#f59e0b', backgroundColor: '#fef3c7' }}><Wallet size={20} /></div>
+          </div>
+          <div>
+            <h2>0 ج.م</h2>
+          </div>
+        </article>
+      </div>
+
+      {showForm && isAdmin && (
+        <form className="panel-form" onSubmit={handleSubmit} style={{ marginBottom: 32 }}>
+          <h3 style={{ marginTop: 0, marginBottom: 20 }}>{editingCustomerId ? 'تعديل بيانات العميل' : 'تسجيل عميل جديد'}</h3>
+          <div className="form-grid">
+            <label>اسم العميل<input className="fs-input" value={pending.name} onChange={(event) => setPending({ ...pending, name: event.target.value })} required /></label>
+            <label>رقم الهاتف<input className="fs-input" value={pending.phone} onChange={(event) => setPending({ ...pending, phone: event.target.value })} /></label>
+            <label className="full-width">العنوان<textarea className="fs-input" rows={2} value={pending.address} onChange={(event) => setPending({ ...pending, address: event.target.value })} /></label>
+            <label className="full-width">ملاحظات<textarea className="fs-input" rows={2} value={pending.notes} onChange={(event) => setPending({ ...pending, notes: event.target.value })} /></label>
+          </div>
+          {error && <p className="auth-error" style={{ marginTop: 16 }}>{error}</p>}
+          <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+            <button className="fs-btn-primary" type="submit" disabled={saving}>{saving ? 'جاري الحفظ...' : editingCustomerId === null ? 'إنشاء حساب العميل' : 'حفظ التعديلات'}</button>
+            {editingCustomerId !== null && <button className="fs-btn-secondary" type="button" onClick={handleCancelEdit}>إلغاء التعديل</button>}
+          </div>
+        </form>
+      )}
+
+      <div className="fs-table-container">
         <div className="table-toolbar">
-          <strong>Customer records</strong>
-          <input value={search} onChange={handleSearch} placeholder="Search customers" />
+          <input className="fs-input" style={{ maxWidth: 300 }} value={search} onChange={handleSearch} placeholder="ابحث باسم العميل أو رقم الهاتف..." />
         </div>
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Address</th>
-              <th>Notes</th>
-              <th>Action</th>
+              <th>اسم العميل</th>
+              <th>الهاتف</th>
+              <th>العنوان</th>
+              <th>ملاحظات</th>
+              {isAdmin && <th>إجراء</th>}
             </tr>
           </thead>
           <tbody>
-            {sortedCustomers.map((customer) => (
+            {sortedCustomers.length === 0 ? (
+              <tr><td colSpan={isAdmin ? 5 : 4} style={{ textAlign: 'center', color: '#7a8691', padding: '40px 0' }}>لا يوجد عملاء مسجلين</td></tr>
+            ) : sortedCustomers.map((customer) => (
               <tr key={customer.id}>
-                <td>{customer.name}</td>
-                <td>{customer.phone ?? '—'}</td>
+                <td style={{ fontWeight: 600 }}>{customer.name}</td>
+                <td dir="ltr" style={{ textAlign: 'right' }}>{customer.phone ?? '—'}</td>
                 <td>{customer.address ?? '—'}</td>
                 <td>{customer.notes ?? '—'}</td>
-                <td>{isAdmin && <><button type="button" className="tiny-button" onClick={() => handleEdit(customer)}>Edit</button> <button type="button" className="tiny-button" onClick={() => void handleArchive(customer.id)}>Archive</button></>}</td>
+                {isAdmin && (
+                  <td>
+                    <button type="button" className="quiet-button" onClick={() => handleEdit(customer)} style={{ marginInlineEnd: 8 }}>تعديل</button>
+                    <button type="button" className="quiet-button" style={{ color: 'var(--fs-danger-text)' }} onClick={() => void handleArchive(customer.id)}>أرشفة</button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

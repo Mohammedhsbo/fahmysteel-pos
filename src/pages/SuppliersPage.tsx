@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
 import type { SupplierRecord } from '../../shared/contacts';
 import { useI18n } from '../i18n';
 
@@ -17,6 +18,7 @@ export function SuppliersPage() {
   const [editingSupplierId, setEditingSupplierId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     void loadSuppliers();
@@ -58,6 +60,7 @@ export function SuppliersPage() {
       }
       setPending(emptySupplier);
       setEditingSupplierId(null);
+      setShowForm(false);
       await loadSuppliers();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'Unable to save supplier.');
@@ -67,6 +70,7 @@ export function SuppliersPage() {
   }
 
   async function handleArchive(supplierId: number) {
+    if (!window.confirm('هل أنت متأكد من أرشفة هذا المورد؟')) return;
     try {
       await window.api.suppliers.archiveSupplier(supplierId);
       await loadSuppliers();
@@ -83,60 +87,73 @@ export function SuppliersPage() {
       address: supplier.address ?? '',
       notes: supplier.notes ?? '',
     });
+    setShowForm(true);
     setError('');
   }
 
   function handleCancelEdit() {
     setEditingSupplierId(null);
     setPending(emptySupplier);
+    setShowForm(false);
     setError('');
   }
 
   return (
     <section className="catalog-page">
       <div className="page-heading">
-        <div>
-          <p className="eyebrow">Next phase</p>
-          <h1>{t('suppliers')}</h1>
-          <p className="heading-copy">Supplier records stay local and work fully offline with the same secure IPC flow.</p>
+        <div className="page-title">
+          <h1>الموردين</h1>
+          <p className="subtitle">{suppliers.length} مورد مسجل</p>
         </div>
+        <button className="fs-btn-primary" type="button" onClick={() => setShowForm(!showForm)}>
+          <Plus size={18} /> {showForm ? 'إلغاء' : 'إضافة مورد'}
+        </button>
       </div>
 
-      <form className="panel-form" onSubmit={handleSubmit}>
-        <div className="form-grid">
-          <label>Name<input value={pending.name} onChange={(event) => setPending({ ...pending, name: event.target.value })} /></label>
-          <label>Phone<input value={pending.phone} onChange={(event) => setPending({ ...pending, phone: event.target.value })} /></label>
-          <label className="full-width">Address<textarea value={pending.address} onChange={(event) => setPending({ ...pending, address: event.target.value })} /></label>
-          <label className="full-width">Notes<textarea value={pending.notes} onChange={(event) => setPending({ ...pending, notes: event.target.value })} /></label>
-        </div>
-        {error && <p className="auth-error">{error}</p>}
-        <button className="auth-submit" type="submit" disabled={saving}>{saving ? 'Saving...' : editingSupplierId === null ? 'Create supplier' : 'Save supplier'}</button>
-        {editingSupplierId !== null && <button className="tiny-button" type="button" onClick={handleCancelEdit}>Cancel edit</button>}
-      </form>
+      {showForm && (
+        <form className="panel-form" onSubmit={handleSubmit} style={{ marginBottom: 32 }}>
+          <h3 style={{ marginTop: 0, marginBottom: 20 }}>{editingSupplierId ? 'تعديل بيانات المورد' : 'تسجيل مورد جديد'}</h3>
+          <div className="form-grid">
+            <label>اسم المورد<input className="fs-input" value={pending.name} onChange={(event) => setPending({ ...pending, name: event.target.value })} required /></label>
+            <label>رقم الهاتف<input className="fs-input" value={pending.phone} onChange={(event) => setPending({ ...pending, phone: event.target.value })} /></label>
+            <label className="full-width">العنوان<textarea className="fs-input" rows={2} value={pending.address} onChange={(event) => setPending({ ...pending, address: event.target.value })} /></label>
+            <label className="full-width">ملاحظات<textarea className="fs-input" rows={2} value={pending.notes} onChange={(event) => setPending({ ...pending, notes: event.target.value })} /></label>
+          </div>
+          {error && <p className="auth-error" style={{ marginTop: 16 }}>{error}</p>}
+          <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+            <button className="fs-btn-primary" type="submit" disabled={saving}>{saving ? 'جاري الحفظ...' : editingSupplierId === null ? 'إنشاء حساب المورد' : 'حفظ التعديلات'}</button>
+            {editingSupplierId !== null && <button className="fs-btn-secondary" type="button" onClick={handleCancelEdit}>إلغاء التعديل</button>}
+          </div>
+        </form>
+      )}
 
-      <div className="table-panel">
+      <div className="fs-table-container">
         <div className="table-toolbar">
-          <strong>Supplier records</strong>
-          <input value={search} onChange={handleSearch} placeholder="Search suppliers" />
+          <input className="fs-input" style={{ maxWidth: 300 }} value={search} onChange={handleSearch} placeholder="ابحث باسم المورد أو الهاتف..." />
         </div>
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Address</th>
-              <th>Notes</th>
-              <th>Action</th>
+              <th>اسم المورد</th>
+              <th>الهاتف</th>
+              <th>العنوان</th>
+              <th>ملاحظات</th>
+              <th>إجراء</th>
             </tr>
           </thead>
           <tbody>
-            {sortedSuppliers.map((supplier) => (
+            {sortedSuppliers.length === 0 ? (
+              <tr><td colSpan={5} style={{ textAlign: 'center', color: '#7a8691', padding: '40px 0' }}>لا يوجد موردين مسجلين</td></tr>
+            ) : sortedSuppliers.map((supplier) => (
               <tr key={supplier.id}>
-                <td>{supplier.name}</td>
-                <td>{supplier.phone ?? '—'}</td>
+                <td style={{ fontWeight: 600 }}>{supplier.name}</td>
+                <td dir="ltr" style={{ textAlign: 'right' }}>{supplier.phone ?? '—'}</td>
                 <td>{supplier.address ?? '—'}</td>
                 <td>{supplier.notes ?? '—'}</td>
-                <td><button type="button" className="tiny-button" onClick={() => handleEdit(supplier)}>Edit</button> <button type="button" className="tiny-button" onClick={() => void handleArchive(supplier.id)}>Archive</button></td>
+                <td>
+                  <button type="button" className="quiet-button" onClick={() => handleEdit(supplier)} style={{ marginInlineEnd: 8 }}>تعديل</button>
+                  <button type="button" className="quiet-button" style={{ color: 'var(--fs-danger-text)' }} onClick={() => void handleArchive(supplier.id)}>أرشفة</button>
+                </td>
               </tr>
             ))}
           </tbody>

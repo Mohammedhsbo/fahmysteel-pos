@@ -46,11 +46,11 @@ export function LoginPage({ authState, onAuthenticated }: LoginPageProps) {
           <p>{isSetup ? t('setupAdmin') : t('signInContinue')}</p>
         </div>
         <form className="auth-form" onSubmit={handleSubmit}>
-          <label>{t('username')}<input autoComplete="username" required value={username} onChange={(event) => setUsername(event.target.value)} /></label>
-          {isSetup && <label>{t('displayName')}<input autoComplete="name" required value={displayName} onChange={(event) => setDisplayName(event.target.value)} /></label>}
-          <label>{t('password')}<input type="password" autoComplete={isSetup ? 'new-password' : 'current-password'} minLength={8} required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+          <label>{t('username')}<input className="fs-input" autoComplete="username" required value={username} onChange={(event) => setUsername(event.target.value)} /></label>
+          {isSetup && <label>{t('displayName')}<input className="fs-input" autoComplete="name" required value={displayName} onChange={(event) => setDisplayName(event.target.value)} /></label>}
+          <label>{t('password')}<input className="fs-input" type="password" autoComplete={isSetup ? 'new-password' : 'current-password'} minLength={8} required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
           {error && <p className="auth-error" role="alert">{error}</p>}
-          <button className="auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? t('checking') : isSetup ? t('createAccount') : t('signIn')}</button>
+          <button className="fs-btn-primary" type="submit" disabled={isSubmitting}>{isSubmitting ? t('checking') : isSetup ? t('createAccount') : t('signIn')}</button>
         </form>
         <div className="auth-note"><ShieldCheck size={15} /><span>{t('credentialsLocal')}</span></div>
       </section>

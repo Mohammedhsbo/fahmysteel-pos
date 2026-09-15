@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import type { CatalogProduct } from '../../shared/catalog';
 import type { SupplierRecord } from '../../shared/contacts';
 import type { PurchaseInvoice } from '../../shared/purchases';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 
 function formatMoney(amountCents: number): string {
@@ -11,6 +12,7 @@ function formatMoney(amountCents: number): string {
 
 export function PurchasesPage() {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [invoices, setInvoices] = useState<PurchaseInvoice[]>([]);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierRecord[]>([]);
@@ -56,16 +58,22 @@ export function PurchasesPage() {
 
   function addLine() {
     if (!lineProductId) {
-      setError('Select a product first.');
+      const message = 'Select a product first.';
+      setError(message);
+      showError(message, 'Select a product first.');
       return;
     }
     const selectedProduct = products.find((product) => product.id === lineProductId);
     if (!selectedProduct) {
-      setError('Selected product was not found.');
+      const message = 'Selected product was not found.';
+      setError(message);
+      showError(message, 'Selected product was not found.');
       return;
     }
     if (quantity <= 0) {
-      setError('Quantity must be greater than zero.');
+      const message = 'Quantity must be greater than zero.';
+      setError(message);
+      showError(message, 'Quantity must be greater than zero.');
       return;
     }
     const existing = items.find((item) => item.productId === selectedProduct.id);
@@ -87,7 +95,9 @@ export function PurchasesPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (items.length === 0) {
-      setError('Add at least one product to the purchase.');
+      const message = 'Add at least one product to the purchase.';
+      setError(message);
+      showError(message, 'Add at least one product to the purchase.');
       return;
     }
     setSaving(true);
@@ -114,7 +124,9 @@ export function PurchasesPage() {
       setShowForm(false);
       await loadInvoices();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to record purchase.');
+      const message = submitError instanceof Error ? submitError.message : 'Unable to record purchase.';
+      setError(message);
+      showError(message, 'Unable to record purchase.');
     } finally {
       setSaving(false);
     }

@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import type { CatalogProduct } from '../../shared/catalog';
 import type { CustomerRecord } from '../../shared/contacts';
 import type { SalesInvoice } from '../../shared/sales';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 
 function formatMoney(amountCents: number): string {
@@ -11,6 +12,7 @@ function formatMoney(amountCents: number): string {
 
 export function SalesPage() {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [customers, setCustomers] = useState<CustomerRecord[]>([]);
@@ -65,16 +67,22 @@ export function SalesPage() {
 
   function addLine() {
     if (!lineProductId) {
-      setError('Select a product first.');
+      const message = 'Select a product first.';
+      setError(message);
+      showError(message, 'Select a product first.');
       return;
     }
     const selectedProduct = products.find((product) => product.id === lineProductId);
     if (!selectedProduct) {
-      setError('Selected product was not found.');
+      const message = 'Selected product was not found.';
+      setError(message);
+      showError(message, 'Selected product was not found.');
       return;
     }
     if (quantity <= 0) {
-      setError('Quantity must be greater than zero.');
+      const message = 'Quantity must be greater than zero.';
+      setError(message);
+      showError(message, 'Quantity must be greater than zero.');
       return;
     }
 
@@ -101,7 +109,9 @@ export function SalesPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (items.length === 0) {
-      setError('Add at least one product to the sale.');
+      const message = 'Add at least one product to the sale.';
+      setError(message);
+      showError(message, 'Add at least one product to the sale.');
       return;
     }
     setSaving(true);
@@ -129,7 +139,9 @@ export function SalesPage() {
       setShowForm(false);
       await loadInvoices();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to record sale.');
+      const message = submitError instanceof Error ? submitError.message : 'Unable to record sale.';
+      setError(message);
+      showError(message, 'Unable to record sale.');
     } finally {
       setSaving(false);
     }
@@ -141,7 +153,9 @@ export function SalesPage() {
     try {
       await window.api.sales.printSalesInvoice(invoiceId);
     } catch (printError) {
-      setError(printError instanceof Error ? printError.message : 'Unable to print invoice.');
+      const message = printError instanceof Error ? printError.message : 'Unable to print invoice.';
+      setError(message);
+      showError(message, 'Unable to print invoice.');
     } finally {
       setPrintingId(null);
     }

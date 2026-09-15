@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react';
 import type { AppSetting } from '../../shared/admin';
 import type { BackupRecord } from '../../shared/backups';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 
-export function SettingsPage() {
+interface SettingsPageProps {
+  onBrandingSaved: () => Promise<void>;
+}
+
+export function SettingsPage({ onBrandingSaved }: SettingsPageProps) {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [settings, setSettings] = useState<AppSetting[]>([]);
   const [backups, setBackups] = useState<BackupRecord[]>([]);
   const [companyName, setCompanyName] = useState('Fahmy Steel');
-  const [workdayStart, setWorkdayStart] = useState('08:00');
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [backupBusy, setBackupBusy] = useState(false);
   const [error, setError] = useState('');
@@ -18,12 +24,28 @@ export function SettingsPage() {
       window.api.admin.listSettings(),
       window.api.backups.listBackups(),
     ]);
-    setSettings(records);
+    setSettings(records.filter((entry) => entry.key !== 'workday_start'));
     setBackups(backupRecords);
     const company = records.find((entry) => entry.key === 'company_name');
-    const workday = records.find((entry) => entry.key === 'workday_start');
+    const logo = records.find((entry) => entry.key === 'company_logo');
     if (company) setCompanyName(company.value);
-    if (workday) setWorkdayStart(workday.value);
+    setCompanyLogo(logo?.value || null);
+  }
+
+  function handleLogoChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Logo must be smaller than 2 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setCompanyLogo(typeof reader.result === 'string' ? reader.result : null);
+    reader.readAsDataURL(file);
   }
 
   async function handleCreateBackup() {
@@ -33,7 +55,9 @@ export function SettingsPage() {
       await window.api.backups.createBackup();
       await loadSettings();
     } catch (backupError) {
-      setError(backupError instanceof Error ? backupError.message : 'Unable to create backup.');
+      const message = backupError instanceof Error ? backupError.message : 'Unable to create backup.';
+      setError(message);
+      showError(message, 'Unable to create backup.');
     } finally {
       setBackupBusy(false);
     }
@@ -47,7 +71,9 @@ export function SettingsPage() {
       await window.api.backups.restoreBackup(backup.id);
       window.location.reload();
     } catch (restoreError) {
-      setError(restoreError instanceof Error ? restoreError.message : 'Unable to restore backup.');
+      const message = restoreError instanceof Error ? restoreError.message : 'Unable to restore backup.';
+      setError(message);
+      showError(message, 'Unable to restore backup.');
     } finally {
       setBackupBusy(false);
     }
@@ -64,10 +90,13 @@ export function SettingsPage() {
 
     try {
       await window.api.admin.setSetting('company_name', companyName);
-      await window.api.admin.setSetting('workday_start', workdayStart);
+      await window.api.admin.setSetting('company_logo', companyLogo ?? '');
       await loadSettings();
+      await onBrandingSaved();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Unable to save settings.');
+      const message = saveError instanceof Error ? saveError.message : 'Unable to save settings.';
+      setError(message);
+      showError(message, 'Unable to save settings.');
     } finally {
       setSaving(false);
     }
@@ -86,7 +115,19 @@ export function SettingsPage() {
       <form className="panel-form" onSubmit={handleSave}>
         <div className="form-grid">
           <label>Company name<input className="fs-input" value={companyName} onChange={(event) => setCompanyName(event.target.value)} /></label>
-          <label>Workday start<input className="fs-input" value={workdayStart} onChange={(event) => setWorkdayStart(event.target.value)} /></label>
+          <div className="branding-field">
+            <span>Company logo</span>
+            <div className="logo-picker">
+              <div className="logo-preview">
+                {companyLogo ? <img src={companyLogo} alt="Company logo preview" /> : <span>ف</span>}
+              </div>
+              <div className="logo-picker-actions">
+                <label className="fs-btn-secondary logo-upload-button">Choose image<input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleLogoChange} /></label>
+                {companyLogo && <button className="quiet-button" type="button" onClick={() => setCompanyLogo(null)}>Remove logo</button>}
+                <small>PNG, JPG or WebP up to 2 MB</small>
+              </div>
+            </div>
+          </div>
         </div>
         {error && <p className="auth-error">{error}</p>}
         <button className="fs-btn-primary" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save settings'}</button>

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { AuditLogRecord, CashierShiftRecord } from '../../shared/operations';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 
 export function OperationsPage() {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [auditLogs, setAuditLogs] = useState<AuditLogRecord[]>([]);
   const [shifts, setShifts] = useState<CashierShiftRecord[]>([]);
   const [openingCash, setOpeningCash] = useState('0');
@@ -37,7 +39,9 @@ export function OperationsPage() {
       setOpeningCash('0');
       await loadData();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to open shift.');
+      const message = submitError instanceof Error ? submitError.message : 'Unable to open shift.';
+      setError(message);
+      showError(message, 'Unable to open shift.');
     } finally {
       setSaving(false);
     }
@@ -58,7 +62,9 @@ export function OperationsPage() {
       setClosingNotes('');
       await loadData();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to close shift.');
+      const message = submitError instanceof Error ? submitError.message : 'Unable to close shift.';
+      setError(message);
+      showError(message, 'Unable to close shift.');
     } finally {
       setSaving(false);
     }

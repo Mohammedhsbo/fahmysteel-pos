@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import type { PayableRecord, ReceivableRecord } from '../../shared/balances';
+import type { CustomerRecord, SupplierRecord } from '../../shared/contacts';
+import type { PurchaseInvoice } from '../../shared/purchases';
+import type { SalesInvoice } from '../../shared/sales';
 import type { ExpenseRecord, TreasuryTransaction } from '../../shared/treasury';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 
 function formatMoney(amountCents: number): string {
@@ -10,9 +14,14 @@ function formatMoney(amountCents: number): string {
 
 export function TreasuryPage() {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [transactions, setTransactions] = useState<TreasuryTransaction[]>([]);
   const [receivables, setReceivables] = useState<ReceivableRecord[]>([]);
   const [payables, setPayables] = useState<PayableRecord[]>([]);
+  const [customers, setCustomers] = useState<CustomerRecord[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierRecord[]>([]);
+  const [salesInvoices, setSalesInvoices] = useState<SalesInvoice[]>([]);
+  const [purchaseInvoices, setPurchaseInvoices] = useState<PurchaseInvoice[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<Array<{ id: number; code: string; name: string }>>([]);
   const [category, setCategory] = useState('');
   const [amountCents, setAmountCents] = useState(0);
@@ -30,7 +39,7 @@ export function TreasuryPage() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   useEffect(() => {
-    void Promise.all([loadTransactions(), loadPaymentMethods(), loadBalances()]);
+    void Promise.all([loadTransactions(), loadPaymentMethods(), loadBalances(), loadPartiesAndInvoices()]);
   }, []);
 
   async function loadTransactions() {
@@ -52,6 +61,24 @@ export function TreasuryPage() {
     setReceivables(receivableRows);
     setPayables(payableRows);
   }
+
+  async function loadPartiesAndInvoices() {
+    const [customerRows, supplierRows, salesInvoiceRows, purchaseInvoiceRows] = await Promise.all([
+      window.api.customers.listCustomers(),
+      window.api.suppliers.listSuppliers(),
+      window.api.sales.listSalesInvoices(),
+      window.api.purchases.listPurchaseInvoices(),
+    ]);
+    setCustomers(customerRows);
+    setSuppliers(supplierRows);
+    setSalesInvoices(salesInvoiceRows);
+    setPurchaseInvoices(purchaseInvoiceRows);
+  }
+
+  const partyOptions = partyType === 'CUSTOMER' ? customers : suppliers;
+  const invoiceOptions = partyType === 'CUSTOMER'
+    ? salesInvoices.filter((invoice) => invoice.customerId === partyId)
+    : purchaseInvoices.filter((invoice) => invoice.supplierId === partyId);
 
   const totalOut = useMemo(() => transactions.filter((entry) => entry.direction === 'OUT').reduce((sum, entry) => sum + entry.amountCents, 0), [transactions]);
   const totalIn = useMemo(() => transactions.filter((entry) => entry.direction === 'IN').reduce((sum, entry) => sum + entry.amountCents, 0), [transactions]);
@@ -75,7 +102,9 @@ export function TreasuryPage() {
       await loadTransactions();
       await loadBalances();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to save expense.');
+      const message = submitError instanceof Error ? submitError.message : 'Unable to save expense.';
+      setError(message);
+      showError(message, 'Unable to save expense.');
     } finally {
       setSaving(false);
     }
@@ -102,7 +131,9 @@ export function TreasuryPage() {
       await loadTransactions();
       await loadBalances();
     } catch (paymentError) {
-      setError(paymentError instanceof Error ? paymentError.message : 'Unable to record payment.');
+      const message = paymentError instanceof Error ? paymentError.message : 'Unable to record payment.';
+      setError(message);
+      showError(message, 'Unable to record payment.');
     } finally {
       setPaymentSaving(false);
     }
@@ -173,8 +204,14 @@ export function TreasuryPage() {
               <option value="CUSTOMER">تحصيل من عميل</option>
               <option value="SUPPLIER">سداد لمورد</option>
             </select></label>
-            <label>رقم الحساب (ID)<input className="fs-input" type="number" min={1} value={partyId || ''} onChange={(event) => setPartyId(Number(event.target.value) || 0)} required /></label>
-            <label>رقم الفاتورة (اختياري)<input className="fs-input" type="number" min={1} value={invoiceId || ''} onChange={(event) => setInvoiceId(Number(event.target.value) || 0)} /></label>
+            <label>الحساب<select className="fs-select" value={partyId || ''} onChange={(event) => { setPartyId(Number(event.target.value) || 0); setInvoiceId(0); }} required>
+              <option value="">-- اختر الحساب --</option>
+              {partyOptions.map((party) => <option key={party.id} value={party.id}>{party.name}</option>)}
+            </select></label>
+            <label>الفاتورة (اختياري)<select className="fs-select" value={invoiceId || ''} onChange={(event) => setInvoiceId(Number(event.target.value) || 0)}>
+              <option value="">بدون فاتورة</option>
+              {invoiceOptions.map((invoice) => <option key={invoice.id} value={invoice.id}>{invoice.invoiceNumber} - {partyType === 'CUSTOMER' ? (invoice as SalesInvoice).customerName : (invoice as PurchaseInvoice).supplierName}</option>)}
+            </select></label>
             <label>المبلغ<input className="fs-input" type="number" min={1} value={paymentAmountCents || ''} onChange={(event) => setPaymentAmountCents(Number(event.target.value) || 0)} required /></label>
             <label>طريقة الدفع<select className="fs-select" value={paymentMethodId} onChange={(event) => setPaymentMethodId(Number(event.target.value))}>
               {paymentMethods.map((method) => <option key={method.id} value={method.id}>{method.name}</option>)}

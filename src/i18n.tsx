@@ -41,6 +41,19 @@ const uiTranslations: Record<string, string> = {
 
 const reverseUiTranslations = Object.fromEntries(Object.entries(uiTranslations).map(([english, arabic]) => [arabic, english]));
 
+export function localizeMessage(locale: SupportedLocale, message: string): string {
+  if (!message) return '';
+  if (locale !== 'ar') return message;
+
+  const directMatch = uiTranslations[message];
+  if (directMatch) return directMatch;
+
+  const reversedMatch = reverseUiTranslations[message];
+  if (reversedMatch) return reversedMatch;
+
+  return message;
+}
+
 function translateRenderedUi(locale: SupportedLocale): void {
   const replacements = locale === 'ar' ? uiTranslations : reverseUiTranslations;
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);

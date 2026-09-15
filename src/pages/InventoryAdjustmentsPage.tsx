@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import type { CatalogProduct } from '../../shared/catalog';
 import type { InventoryAdjustmentRecord } from '../../shared/inventory';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 
 export function InventoryAdjustmentsPage() {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [adjustments, setAdjustments] = useState<InventoryAdjustmentRecord[]>([]);
   const [productId, setProductId] = useState('');
@@ -41,7 +43,9 @@ export function InventoryAdjustmentsPage() {
       setReason('');
       await loadData();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to adjust stock.');
+      const message = submitError instanceof Error ? submitError.message : 'Unable to adjust stock.';
+      setError(message);
+      showError(message, 'Unable to adjust stock.');
     } finally {
       setSaving(false);
     }

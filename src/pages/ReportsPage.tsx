@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { DashboardSummary, SalesByDayPoint, TopProductPoint } from '../../shared/reports';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -17,6 +18,7 @@ const emptySummary: DashboardSummary = {
 
 export function ReportsPage() {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [summary, setSummary] = useState<DashboardSummary>(emptySummary);
   const [salesByDay, setSalesByDay] = useState<SalesByDayPoint[]>([]);
   const [topProducts, setTopProducts] = useState<TopProductPoint[]>([]);
@@ -38,7 +40,9 @@ export function ReportsPage() {
       setSalesByDay(byDay);
       setTopProducts(products);
     } catch (reportError) {
-      setError(reportError instanceof Error ? reportError.message : 'Unable to load reports.');
+      const message = reportError instanceof Error ? reportError.message : 'Unable to load reports.';
+      setError(message);
+      showError(message, 'Unable to load reports.');
     }
   }
 
@@ -48,7 +52,9 @@ export function ReportsPage() {
     try {
       await window.api.reports.exportCsv();
     } catch (exportError) {
-      setError(exportError instanceof Error ? exportError.message : 'Unable to export reports.');
+      const message = exportError instanceof Error ? exportError.message : 'Unable to export reports.';
+      setError(message);
+      showError(message, 'Unable to export reports.');
     } finally {
       setExporting(false);
     }

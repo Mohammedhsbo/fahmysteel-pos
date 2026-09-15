@@ -60,6 +60,21 @@ button { cursor: pointer; }
 .auth-submit:active:not(:disabled) { transform: translateY(0) scale(0.98); box-shadow: none; }
 .auth-submit:disabled { cursor: not-allowed; opacity: .65; }
 .auth-error { margin: -2px 0 -2px; padding: 12px 14px; border: 1px solid #fecaca; color: var(--fs-danger-text); background: var(--fs-danger-bg); font-size: 13px; font-weight: 500; border-radius: var(--radius-sm); }
+.toast-root { position: fixed; right: 24px; bottom: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: min(420px, calc(100vw - 32px)); }
+[dir='rtl'] .toast-root { right: auto; left: 24px; }
+.toast-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--fs-border); background: rgba(255, 255, 255, 0.98); box-shadow: var(--shadow-lg); backdrop-filter: blur(6px); }
+.toast-item.error { border-color: #fecaca; background: #fff5f5; }
+.toast-item.success { border-color: #bbf7d0; background: #f0fdf4; }
+.toast-item.info { border-color: #bfdbfe; background: #eff6ff; }
+.toast-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; flex-shrink: 0; }
+.toast-item.error .toast-icon { background: #fee2e2; color: var(--fs-danger-text); }
+.toast-item.success .toast-icon { background: #dcfce7; color: var(--fs-success-text); }
+.toast-item.info .toast-icon { background: #dbeafe; color: #1d4ed8; }
+.toast-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
+.toast-copy strong { font-size: 14px; font-weight: 700; color: var(--fs-text-main); }
+.toast-copy span { font-size: 13px; line-height: 1.5; color: var(--fs-text-main); }
+.toast-close { display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 999px; background: transparent; color: var(--fs-text-muted); cursor: pointer; }
+.toast-close:hover { background: rgba(0, 0, 0, 0.04); }
 .auth-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--fs-border); color: var(--fs-text-muted); font-size: 12px; line-height: 1.5; }
 .auth-note svg { flex: 0 0 auto; color: var(--fs-success-text); }
 
@@ -71,6 +86,7 @@ button { cursor: pointer; }
 
 .brand-lockup { display: flex; align-items: center; gap: 14px; padding: 0 12px 40px; }
 .brand-mark { display: grid; place-items: center; width: 44px; height: 44px; background: var(--fs-orange); color: #fff; font-size: 20px; font-weight: 800; border-radius: 12px; flex-shrink: 0; }
+.brand-logo { display: block; width: 44px; height: 44px; padding: 4px; object-fit: contain; background: #fff; border-radius: 12px; flex-shrink: 0; }
 .brand-name { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; color: #fff; }
 .brand-caption { margin: 3px 0 0; color: #a4b3c2; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }
 
@@ -186,6 +202,14 @@ button { cursor: pointer; }
 .panel-form { padding: 32px; border: 1px solid var(--fs-border); background: var(--fs-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 .form-grid label { display: flex; flex-direction: column; gap: 8px; color: var(--fs-text-main); font-size: 14px; font-weight: 600; }
+.branding-field { display: flex; flex-direction: column; gap: 8px; color: var(--fs-text-main); font-size: 14px; font-weight: 600; }
+.logo-picker { display: flex; align-items: center; gap: 16px; }
+.logo-preview { display: grid; place-items: center; width: 72px; height: 72px; overflow: hidden; border: 1px dashed var(--fs-border); background: var(--fs-bg); color: var(--fs-orange); font-size: 28px; font-weight: 800; border-radius: var(--radius-md); }
+.logo-preview img { width: 100%; height: 100%; object-fit: contain; }
+.logo-picker-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.logo-picker-actions small { flex-basis: 100%; color: var(--fs-text-muted); font-size: 12px; font-weight: 400; }
+.logo-upload-button { position: relative; overflow: hidden; }
+.logo-upload-button input { position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; opacity: 0; }
 .full-width { grid-column: 1 / -1; }
 
 .empty-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 280px; margin: 32px 0; border: 1px dashed var(--fs-border); background: #fafafa; text-align: center; border-radius: var(--radius-lg); }

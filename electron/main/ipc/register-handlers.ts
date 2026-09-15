@@ -37,12 +37,18 @@ import type { PurchaseInvoiceInput } from '../../../shared/purchases.js';
 import type { SalesInvoiceInput } from '../../../shared/sales.js';
 
 export function registerIpcHandlers(): void {
-  ipcMain.handle('app:get-info', (): AppInfo => ({
-    name: 'Fahmy Steel',
-    version: app.getVersion(),
-    locale: 'en',
-    isAuthenticated: getSession() !== null,
-  }));
+  ipcMain.handle('app:get-info', (): AppInfo => {
+    const database = getDatabase();
+    const company = database.prepare('SELECT value FROM app_settings WHERE key = ?').get('company_name') as { value: string } | undefined;
+    const logo = database.prepare('SELECT value FROM app_settings WHERE key = ?').get('company_logo') as { value: string } | undefined;
+    return {
+      name: company?.value || 'Fahmy Steel',
+      logoDataUrl: logo?.value || null,
+      version: app.getVersion(),
+      locale: 'en',
+      isAuthenticated: getSession() !== null,
+    };
+  });
 
   ipcMain.handle('auth:login', (_event, username: unknown, password: unknown) => {
     if (typeof username !== 'string' || typeof password !== 'string') {

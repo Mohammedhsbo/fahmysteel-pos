@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import type { CatalogCategory, CatalogProduct, CatalogUnit } from '../../shared/catalog';
 import type { LowStockProduct } from '../../shared/inventory-alerts';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 
 const emptyProduct = {
@@ -26,6 +27,7 @@ const emptyCategory = {
 
 export function CatalogPage() {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [units, setUnits] = useState<CatalogUnit[]>([]);
   const [categories, setCategories] = useState<CatalogCategory[]>([]);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
@@ -89,7 +91,9 @@ export function CatalogPage() {
       setShowProductForm(false);
       await loadCatalog();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Unable to save product.');
+      const message = saveError instanceof Error ? saveError.message : 'Unable to save product.';
+      setError(message);
+      showError(message, 'Unable to save product.');
     } finally {
       setIsSaving(false);
     }
@@ -100,7 +104,9 @@ export function CatalogPage() {
       await window.api.catalog.archiveProduct(productId);
       await loadCatalog();
     } catch (archiveError) {
-      setError(archiveError instanceof Error ? archiveError.message : 'Unable to archive product.');
+      const message = archiveError instanceof Error ? archiveError.message : 'Unable to archive product.';
+      setError(message);
+      showError(message, 'Unable to archive product.');
     }
   }
 
@@ -119,7 +125,9 @@ export function CatalogPage() {
       setShowCategoryForm(false);
       await loadCatalog();
     } catch (categoryError) {
-      setError(categoryError instanceof Error ? categoryError.message : 'Unable to save category.');
+      const message = categoryError instanceof Error ? categoryError.message : 'Unable to save category.';
+      setError(message);
+      showError(message, 'Unable to save category.');
     } finally {
       setIsSaving(false);
     }
@@ -130,7 +138,9 @@ export function CatalogPage() {
       await window.api.catalog.archiveCategory(categoryId);
       await loadCatalog();
     } catch (archiveError) {
-      setError(archiveError instanceof Error ? archiveError.message : 'Unable to archive category.');
+      const message = archiveError instanceof Error ? archiveError.message : 'Unable to archive category.';
+      setError(message);
+      showError(message, 'Unable to archive category.');
     }
   }
 

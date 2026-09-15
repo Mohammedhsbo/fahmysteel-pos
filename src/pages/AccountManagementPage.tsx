@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { UserRecord } from '../../shared/admin';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 
 const emptyForm = {
@@ -11,6 +12,7 @@ const emptyForm = {
 
 export function AccountManagementPage() {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [pending, setPending] = useState(emptyForm);
   const [resetUserId, setResetUserId] = useState(0);
@@ -42,7 +44,9 @@ export function AccountManagementPage() {
       setPending(emptyForm);
       await loadUsers();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to create user.');
+      const message = submitError instanceof Error ? submitError.message : 'Unable to create user.';
+      setError(message);
+      showError(message, 'Unable to create user.');
     } finally {
       setSaving(false);
     }
@@ -53,7 +57,9 @@ export function AccountManagementPage() {
       await window.api.admin.updateUser(user.id, { isActive: !user.isActive });
       await loadUsers();
     } catch (toggleError) {
-      setError(toggleError instanceof Error ? toggleError.message : 'Unable to update user.');
+      const message = toggleError instanceof Error ? toggleError.message : 'Unable to update user.';
+      setError(message);
+      showError(message, 'Unable to update user.');
     }
   }
 
@@ -67,7 +73,9 @@ export function AccountManagementPage() {
       setResetUserId(0);
       setResetPassword('');
     } catch (resetError) {
-      setError(resetError instanceof Error ? resetError.message : 'Unable to reset password.');
+      const message = resetError instanceof Error ? resetError.message : 'Unable to reset password.';
+      setError(message);
+      showError(message, 'Unable to reset password.');
     } finally {
       setSaving(false);
     }

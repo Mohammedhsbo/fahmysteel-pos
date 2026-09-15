@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, Users, Clock, Wallet } from 'lucide-react';
 import type { CustomerRecord } from '../../shared/contacts';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 
 const emptyCustomer = {
@@ -12,6 +13,7 @@ const emptyCustomer = {
 
 export function CustomersPage() {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
   const [customers, setCustomers] = useState<CustomerRecord[]>([]);
   const [search, setSearch] = useState('');
@@ -65,7 +67,9 @@ export function CustomersPage() {
       setShowForm(false);
       await loadCustomers();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Unable to save customer.');
+      const message = saveError instanceof Error ? saveError.message : 'Unable to save customer.';
+      setError(message);
+      showError(message, 'Unable to save customer.');
     } finally {
       setSaving(false);
     }
@@ -77,7 +81,9 @@ export function CustomersPage() {
       await window.api.customers.archiveCustomer(customerId);
       await loadCustomers();
     } catch (archiveError) {
-      setError(archiveError instanceof Error ? archiveError.message : 'Unable to archive customer.');
+      const message = archiveError instanceof Error ? archiveError.message : 'Unable to archive customer.';
+      setError(message);
+      showError(message, 'Unable to archive customer.');
     }
   }
 

@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { LockKeyhole, ShieldCheck } from 'lucide-react';
 import type { AuthState, SessionUser } from '../../shared/api';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 
 interface LoginPageProps {
@@ -10,6 +11,7 @@ interface LoginPageProps {
 
 export function LoginPage({ authState, onAuthenticated }: LoginPageProps) {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +31,9 @@ export function LoginPage({ authState, onAuthenticated }: LoginPageProps) {
         : await window.api.auth.login(username, password);
       onAuthenticated(session);
     } catch (submissionError) {
-      setError(submissionError instanceof Error ? submissionError.message : 'Unable to authenticate.');
+      const message = submissionError instanceof Error ? submissionError.message : 'Unable to authenticate.';
+      setError(message);
+      showError(message, 'Unable to authenticate.');
     } finally {
       setIsSubmitting(false);
     }

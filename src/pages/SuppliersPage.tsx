@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import type { SupplierRecord } from '../../shared/contacts';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 
 const emptySupplier = {
@@ -12,6 +13,7 @@ const emptySupplier = {
 
 export function SuppliersPage() {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [suppliers, setSuppliers] = useState<SupplierRecord[]>([]);
   const [search, setSearch] = useState('');
   const [pending, setPending] = useState(emptySupplier);
@@ -63,7 +65,9 @@ export function SuppliersPage() {
       setShowForm(false);
       await loadSuppliers();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Unable to save supplier.');
+      const message = saveError instanceof Error ? saveError.message : 'Unable to save supplier.';
+      setError(message);
+      showError(message, 'Unable to save supplier.');
     } finally {
       setSaving(false);
     }
@@ -75,7 +79,9 @@ export function SuppliersPage() {
       await window.api.suppliers.archiveSupplier(supplierId);
       await loadSuppliers();
     } catch (archiveError) {
-      setError(archiveError instanceof Error ? archiveError.message : 'Unable to archive supplier.');
+      const message = archiveError instanceof Error ? archiveError.message : 'Unable to archive supplier.';
+      setError(message);
+      showError(message, 'Unable to archive supplier.');
     }
   }
 

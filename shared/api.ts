@@ -3,6 +3,7 @@ export type UserRole = 'ADMIN' | 'CASHIER';
 
 export interface AppInfo {
   name: string;
+  logoDataUrl: string | null;
   version: string;
   locale: SupportedLocale;
   isAuthenticated: boolean;

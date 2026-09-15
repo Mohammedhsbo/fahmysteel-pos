@@ -6,6 +6,7 @@ import { useI18n } from '../i18n';
 
 interface AppShellProps extends PropsWithChildren {
   appName: string;
+  logoDataUrl: string | null;
   session: SessionUser;
   locale: SupportedLocale;
   onLocaleChange: (locale: SupportedLocale) => void;
@@ -27,13 +28,13 @@ const navigation = [
   { key: 'operations', icon: ClipboardList, path: '/operations' },
 ];
 
-export function AppShell({ appName, session, locale, onLocaleChange, onLogout, children }: AppShellProps) {
+export function AppShell({ appName, logoDataUrl, session, locale, onLocaleChange, onLogout, children }: AppShellProps) {
   const { t } = useI18n();
   return (
     <div className="shell">
       <aside className="sidebar">
         <div className="brand-lockup">
-          <div className="brand-mark">ف</div>
+          {logoDataUrl ? <img className="brand-logo" src={logoDataUrl} alt="Company logo" /> : <div className="brand-mark">ف</div>}
           <div><p className="brand-name">{appName}</p><p className="brand-caption">FAHMY STEEL</p></div>
         </div>
         <nav className="primary-nav" aria-label="Primary navigation">

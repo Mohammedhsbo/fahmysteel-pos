@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import type { AppInfo, AuthState, SessionUser, SupportedLocale } from '../shared/api';
+import { ToastProvider } from './components/ToastProvider';
 import { I18nProvider } from './i18n';
 import { AccountManagementPage } from './pages/AccountManagementPage';
 import { AppShell } from './layouts/AppShell';
@@ -41,6 +42,10 @@ export default function App() {
     localStorage.setItem('fahmy-steel-locale', nextLocale);
   }
 
+  async function refreshAppInfo() {
+    setAppInfo(await window.api.getAppInfo());
+  }
+
   function handleLogout() {
     void window.api.auth.logout().then(() => {
       setAuthState((current) => current ? { ...current, session: null } : current);
@@ -49,42 +54,51 @@ export default function App() {
 
   const isAdmin = authState?.session?.role === 'ADMIN';
 
-  if (!authState) return <div className="auth-loading">Loading secure workspace...</div>;
-  if (!authState.session) return <I18nProvider locale={locale}><LoginPage authState={authState} onAuthenticated={handleAuthenticated} /></I18nProvider>;
+  const content = (() => {
+    if (!authState) return <div className="auth-loading">Loading secure workspace...</div>;
+    if (!authState.session) return <LoginPage authState={authState} onAuthenticated={handleAuthenticated} />;
+
+    return (
+      <div className="app-root" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+        <BrowserRouter>
+          <AppShell
+            appName={appInfo?.name ?? 'Fahmy Steel'}
+            logoDataUrl={appInfo?.logoDataUrl ?? null}
+            session={authState.session}
+            locale={locale}
+            onLocaleChange={handleLocaleChange}
+            onLogout={handleLogout}
+          >
+            <Routes>
+              {isAdmin && <Route path="/" element={<DashboardPage />} />}
+              <Route path="/sales" element={<SalesPage />} />
+              <Route path="/customers" element={<CustomersPage />} />
+              <Route path="/returns" element={<ReturnsPage />} />
+              {isAdmin && <>
+                <Route path="/purchases" element={<PurchasesPage />} />
+                <Route path="/purchase-returns" element={<PurchaseReturnsPage />} />
+                <Route path="/inventory" element={<CatalogPage />} />
+                <Route path="/inventory-adjustments" element={<InventoryAdjustmentsPage />} />
+                <Route path="/suppliers" element={<SuppliersPage />} />
+                <Route path="/treasury" element={<TreasuryPage />} />
+                <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/operations" element={<OperationsPage />} />
+                <Route path="/accounts" element={<AccountManagementPage />} />
+                <Route path="/settings" element={<SettingsPage onBrandingSaved={refreshAppInfo} />} />
+              </>}
+              <Route path="*" element={<Navigate to={isAdmin ? '/' : '/sales'} replace />} />
+            </Routes>
+          </AppShell>
+        </BrowserRouter>
+      </div>
+    );
+  })();
 
   return (
     <I18nProvider locale={locale}>
-      <div className="app-root" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-      <BrowserRouter>
-        <AppShell
-          appName={appInfo?.name ?? 'Fahmy Steel'}
-          session={authState.session}
-          locale={locale}
-          onLocaleChange={handleLocaleChange}
-          onLogout={handleLogout}
-        >
-          <Routes>
-            {isAdmin && <Route path="/" element={<DashboardPage />} />}
-            <Route path="/sales" element={<SalesPage />} />
-            <Route path="/customers" element={<CustomersPage />} />
-            <Route path="/returns" element={<ReturnsPage />} />
-            {isAdmin && <>
-              <Route path="/purchases" element={<PurchasesPage />} />
-              <Route path="/purchase-returns" element={<PurchaseReturnsPage />} />
-              <Route path="/inventory" element={<CatalogPage />} />
-              <Route path="/inventory-adjustments" element={<InventoryAdjustmentsPage />} />
-              <Route path="/suppliers" element={<SuppliersPage />} />
-              <Route path="/treasury" element={<TreasuryPage />} />
-              <Route path="/reports" element={<ReportsPage />} />
-              <Route path="/operations" element={<OperationsPage />} />
-              <Route path="/accounts" element={<AccountManagementPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-            </>}
-            <Route path="*" element={<Navigate to={isAdmin ? '/' : '/sales'} replace />} />
-          </Routes>
-        </AppShell>
-      </BrowserRouter>
-      </div>
+      <ToastProvider>
+        {content}
+      </ToastProvider>
     </I18nProvider>
   );
 }

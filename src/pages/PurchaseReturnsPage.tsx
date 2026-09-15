@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { SupplierRecord } from '../../shared/contacts';
 import type { PurchaseReturnRecord } from '../../shared/purchase-returns';
+import type { PurchaseInvoice } from '../../shared/purchases';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 
 export function PurchaseReturnsPage() {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [returns, setReturns] = useState<PurchaseReturnRecord[]>([]);
+  const [invoices, setInvoices] = useState<PurchaseInvoice[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierRecord[]>([]);
   const [invoiceId, setInvoiceId] = useState('');
   const [supplierId, setSupplierId] = useState('');
   const [originalItemId, setOriginalItemId] = useState('');
@@ -18,9 +24,20 @@ export function PurchaseReturnsPage() {
     setReturns(await window.api.purchaseReturns.listPurchaseReturns());
   }
 
+  async function loadFormOptions() {
+    const [invoiceRows, supplierRows] = await Promise.all([
+      window.api.purchases.listPurchaseInvoices(),
+      window.api.suppliers.listSuppliers(),
+    ]);
+    setInvoices(invoiceRows);
+    setSuppliers(supplierRows);
+  }
+
   useEffect(() => {
-    void loadReturns();
+    void Promise.all([loadReturns(), loadFormOptions()]);
   }, []);
+
+  const selectedInvoice = invoices.find((invoice) => invoice.id === Number(invoiceId));
 
   const sortedReturns = useMemo(
     () => [...returns].sort((left, right) => right.returnedAt.localeCompare(left.returnedAt)),
@@ -49,8 +66,11 @@ export function PurchaseReturnsPage() {
       setRefund('0');
       setReason('');
       await loadReturns();
+      await loadFormOptions();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to create purchase return.');
+      const message = submitError instanceof Error ? submitError.message : 'Unable to create purchase return.';
+      setError(message);
+      showError(message, 'Unable to create purchase return.');
     } finally {
       setSaving(false);
     }
@@ -68,9 +88,18 @@ export function PurchaseReturnsPage() {
 
       <form className="panel-form" onSubmit={handleSubmit}>
         <div className="form-grid">
-          <label>Original invoice ID<input className="fs-input" type="number" min="1" value={invoiceId} onChange={(event) => setInvoiceId(event.target.value)} /></label>
-          <label>Supplier ID<input className="fs-input" type="number" min="1" value={supplierId} onChange={(event) => setSupplierId(event.target.value)} /></label>
-          <label>Original item ID<input className="fs-input" type="number" min="1" value={originalItemId} onChange={(event) => setOriginalItemId(event.target.value)} /></label>
+          <label>Original invoice<select className="fs-select" value={invoiceId} onChange={(event) => { setInvoiceId(event.target.value); setOriginalItemId(''); }} required>
+            <option value="">-- Select invoice --</option>
+            {invoices.map((invoice) => <option key={invoice.id} value={invoice.id}>{invoice.invoiceNumber} - {invoice.supplierName ?? 'Direct purchase'}</option>)}
+          </select></label>
+          <label>Supplier<select className="fs-select" value={supplierId} onChange={(event) => setSupplierId(event.target.value)}>
+            <option value="">Direct purchase</option>
+            {suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}
+          </select></label>
+          <label>Original item<select className="fs-select" value={originalItemId} onChange={(event) => setOriginalItemId(event.target.value)} required disabled={!selectedInvoice}>
+            <option value="">-- Select item --</option>
+            {selectedInvoice?.items.map((item) => <option key={item.id} value={item.id}>{item.productName} ({item.quantity})</option>)}
+          </select></label>
           <label>Quantity<input className="fs-input" type="number" min="0.01" step="0.01" value={quantity} onChange={(event) => setQuantity(event.target.value)} /></label>
           <label>Refund amount (EGP)<input className="fs-input" type="number" min="0" step="0.01" value={refund} onChange={(event) => setRefund(event.target.value)} /></label>
           <label className="full-width">Reason<textarea className="fs-input" value={reason} onChange={(event) => setReason(event.target.value)} /></label>

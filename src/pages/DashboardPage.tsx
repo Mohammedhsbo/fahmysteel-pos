@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowUpRight, CircleDollarSign, FileText, PackageSearch, Users, Briefcase, TrendingUp } from 'lucide-react';
 import type { DashboardSummary, SalesByDayPoint, TopProductPoint } from '../../shared/reports';
 import type { TreasuryTransaction } from '../../shared/treasury';
+import { useToast } from '../components/ToastProvider';
 import { useI18n } from '../i18n';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -21,6 +22,7 @@ function formatMoney(amountCents: number): string {
 
 export function DashboardPage() {
   const { t } = useI18n();
+  const { showError } = useToast();
   const [summary, setSummary] = useState<DashboardSummary>(emptySummary);
   const [salesByDay, setSalesByDay] = useState<SalesByDayPoint[]>([]);
   const [topProducts, setTopProducts] = useState<TopProductPoint[]>([]);
@@ -36,9 +38,11 @@ export function DashboardPage() {
       setSalesByDay(salesHistory);
       setTopProducts(top);
     }).catch((loadError) => {
-      setError(loadError instanceof Error ? loadError.message : 'Unable to load dashboard.');
+      const message = loadError instanceof Error ? loadError.message : 'Unable to load dashboard.';
+      setError(message);
+      showError(message, 'Unable to load dashboard.');
     });
-  }, []);
+  }, [showError]);
 
   const today = new Intl.DateTimeFormat('ar-EG', { dateStyle: 'full' }).format(new Date());
 

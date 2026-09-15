@@ -161,8 +161,16 @@ const migrations = [
         shift_id INTEGER,
         status TEXT NOT NULL CHECK (status IN ('PAID', 'PARTIALLY_PAID', 'CREDIT', 'CANCELLED', 'RETURNED')),
         subtotal_cents INTEGER NOT NULL CHECK (subtotal_cents >= 0),
+        discount_type TEXT NOT NULL DEFAULT 'FIXED' CHECK (discount_type IN ('FIXED', 'PERCENT')),
+        discount_value_cents INTEGER NOT NULL DEFAULT 0 CHECK (discount_value_cents >= 0),
+        discount_percentage REAL NOT NULL DEFAULT 0 CHECK (discount_percentage >= 0 AND discount_percentage <= 100),
+        discount_amount_cents INTEGER NOT NULL DEFAULT 0 CHECK (discount_amount_cents >= 0),
         discount_cents INTEGER NOT NULL DEFAULT 0 CHECK (discount_cents >= 0),
+        tax_enabled INTEGER NOT NULL DEFAULT 0 CHECK (tax_enabled IN (0, 1)),
+        tax_rate_percent REAL NOT NULL DEFAULT 0 CHECK (tax_rate_percent >= 0 AND tax_rate_percent <= 100),
         tax_cents INTEGER NOT NULL DEFAULT 0 CHECK (tax_cents >= 0),
+        tax_amount_cents INTEGER NOT NULL DEFAULT 0 CHECK (tax_amount_cents >= 0),
+        cash_expenses_cents INTEGER NOT NULL DEFAULT 0 CHECK (cash_expenses_cents >= 0),
         total_cents INTEGER NOT NULL CHECK (total_cents >= 0),
         paid_cents INTEGER NOT NULL DEFAULT 0 CHECK (paid_cents >= 0 AND paid_cents <= total_cents),
         notes TEXT,
@@ -327,6 +335,118 @@ const migrations = [
       CREATE INDEX IF NOT EXISTS idx_purchase_return_items_product_id ON purchase_return_items(product_id);
     `,
   },
+  {
+    version: 5,
+    sql: `
+      ALTER TABLE sales_invoices ADD COLUMN payment_method_id INTEGER REFERENCES payment_methods(id) ON DELETE RESTRICT;
+      ALTER TABLE sales_invoices ADD COLUMN card_last4 TEXT;
+
+      CREATE TABLE IF NOT EXISTS payment_method_settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        vodafone_cash_number TEXT,
+        vodafone_cash_enabled INTEGER NOT NULL DEFAULT 0 CHECK (vodafone_cash_enabled IN (0, 1)),
+        instapay_number TEXT,
+        instapay_enabled INTEGER NOT NULL DEFAULT 0 CHECK (instapay_enabled IN (0, 1)),
+        visa_enabled INTEGER NOT NULL DEFAULT 0 CHECK (visa_enabled IN (0, 1)),
+        updated_at TEXT NOT NULL,
+        updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+      );
+    `,
+  },
+  {
+    version: 6,
+    sql: `
+      CREATE TABLE IF NOT EXISTS payment_method_settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        vodafone_cash_number TEXT,
+        vodafone_cash_enabled INTEGER NOT NULL DEFAULT 0 CHECK (vodafone_cash_enabled IN (0, 1)),
+        instapay_number TEXT,
+        instapay_enabled INTEGER NOT NULL DEFAULT 0 CHECK (instapay_enabled IN (0, 1)),
+        visa_enabled INTEGER NOT NULL DEFAULT 0 CHECK (visa_enabled IN (0, 1)),
+        updated_at TEXT NOT NULL,
+        updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+      );
+    `,
+  },
+  {
+    version: 7,
+    sql: `
+      CREATE TABLE IF NOT EXISTS payment_method_settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        vodafone_cash_number TEXT,
+        vodafone_cash_enabled INTEGER NOT NULL DEFAULT 0 CHECK (vodafone_cash_enabled IN (0, 1)),
+        instapay_number TEXT,
+        instapay_enabled INTEGER NOT NULL DEFAULT 0 CHECK (instapay_enabled IN (0, 1)),
+        visa_enabled INTEGER NOT NULL DEFAULT 0 CHECK (visa_enabled IN (0, 1)),
+        updated_at TEXT NOT NULL,
+        updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+      );
+    `,
+  },
+  {
+    version: 8,
+    sql: `
+      ALTER TABLE products ADD COLUMN steel_type TEXT;
+      ALTER TABLE products ADD COLUMN shape TEXT;
+      ALTER TABLE products ADD COLUMN width_mm REAL;
+      ALTER TABLE products ADD COLUMN height_mm REAL;
+      ALTER TABLE products ADD COLUMN thickness_mm REAL;
+      ALTER TABLE products ADD COLUMN length_m REAL;
+      ALTER TABLE products ADD COLUMN weight_per_piece_kg REAL;
+      ALTER TABLE products ADD COLUMN weight_per_meter_kg REAL;
+      ALTER TABLE products ADD COLUMN selling_price_per_kg_cents INTEGER;
+      ALTER TABLE products ADD COLUMN selling_price_per_piece_cents INTEGER;
+      ALTER TABLE products ADD COLUMN selling_price_per_meter_cents INTEGER;
+      ALTER TABLE inventory_movements ADD COLUMN previous_quantity REAL;
+      ALTER TABLE inventory_movements ADD COLUMN new_quantity REAL;
+      ALTER TABLE inventory_movements ADD COLUMN previous_weight_kg REAL;
+      ALTER TABLE inventory_movements ADD COLUMN new_weight_kg REAL;
+    `,
+  },
+  {
+    version: 9,
+    sql: `
+      ALTER TABLE sales_invoices ADD COLUMN discount_type TEXT DEFAULT 'FIXED';
+      ALTER TABLE sales_invoices ADD COLUMN discount_value_cents INTEGER DEFAULT 0;
+      ALTER TABLE sales_invoices ADD COLUMN discount_percentage REAL DEFAULT 0;
+      ALTER TABLE sales_invoices ADD COLUMN discount_amount_cents INTEGER DEFAULT 0;
+      ALTER TABLE sales_invoices ADD COLUMN tax_enabled INTEGER DEFAULT 0;
+      ALTER TABLE sales_invoices ADD COLUMN tax_rate_percent REAL DEFAULT 0;
+      ALTER TABLE sales_invoices ADD COLUMN tax_amount_cents INTEGER DEFAULT 0;
+      ALTER TABLE sales_invoices ADD COLUMN cash_expenses_cents INTEGER DEFAULT 0;
+      UPDATE sales_invoices SET discount_type = 'FIXED' WHERE discount_type IS NULL OR discount_type NOT IN ('FIXED', 'PERCENT');
+      UPDATE sales_invoices SET discount_value_cents = 0 WHERE discount_value_cents IS NULL;
+      UPDATE sales_invoices SET discount_percentage = 0 WHERE discount_percentage IS NULL;
+      UPDATE sales_invoices SET discount_amount_cents = COALESCE(discount_cents, 0) WHERE discount_amount_cents IS NULL;
+      UPDATE sales_invoices SET tax_enabled = 0 WHERE tax_enabled IS NULL;
+      UPDATE sales_invoices SET tax_rate_percent = 0 WHERE tax_rate_percent IS NULL;
+      UPDATE sales_invoices SET tax_amount_cents = COALESCE(tax_cents, 0) WHERE tax_amount_cents IS NULL;
+      UPDATE sales_invoices SET cash_expenses_cents = 0 WHERE cash_expenses_cents IS NULL;
+    `,
+  },
+  {
+    version: 10,
+    sql: `
+      ALTER TABLE products ADD COLUMN weight_per_sheet_kg REAL;
+    `,
+  },
+  {
+    version: 11,
+    sql: `
+      INSERT INTO categories (name, name_ar, description, is_active, created_at, updated_at)
+      SELECT 'Boxes', 'علب', 'Steel box sections', 1, datetime('now'), datetime('now')
+      WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name_ar = 'علب');
+      INSERT INTO categories (name, name_ar, description, is_active, created_at, updated_at)
+      SELECT 'Angles', 'زوايا', 'Steel angles', 1, datetime('now'), datetime('now')
+      WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name_ar = 'زوايا');
+      INSERT INTO categories (name, name_ar, description, is_active, created_at, updated_at)
+      SELECT 'Sheets', 'صاج', 'Steel sheets', 1, datetime('now'), datetime('now')
+      WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name_ar = 'صاج');
+      INSERT INTO categories (name, name_ar, description, is_active, created_at, updated_at)
+      SELECT 'Pipes', 'مواسير', 'Steel pipes', 1, datetime('now'), datetime('now')
+      WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name_ar = 'مواسير');
+    `,
+  },
 ] as const;
 
 export function runMigrations(database: Database.Database): void {
@@ -348,7 +468,62 @@ export function runMigrations(database: Database.Database): void {
     if (hasMigration.get(migration.version)) continue;
 
     database.transaction(() => {
-      database.exec(migration.sql);
+      if (migration.version === 7 || migration.version === 9) {
+        const columns = new Set(
+          (database.prepare('PRAGMA table_info(sales_invoices)').all() as Array<{ name: string }>).map(({ name }) => name),
+        );
+        if (migration.version === 7) {
+          if (!columns.has('payment_method_id')) {
+            database.exec('ALTER TABLE sales_invoices ADD COLUMN payment_method_id INTEGER REFERENCES payment_methods(id) ON DELETE RESTRICT');
+          }
+          if (!columns.has('card_last4')) {
+            database.exec('ALTER TABLE sales_invoices ADD COLUMN card_last4 TEXT');
+          }
+        }
+        if (migration.version === 9) {
+          const requiredColumns = [
+            'discount_type',
+            'discount_value_cents',
+            'discount_percentage',
+            'discount_amount_cents',
+            'tax_enabled',
+            'tax_rate_percent',
+            'tax_amount_cents',
+            'cash_expenses_cents',
+          ];
+          const missingColumns = requiredColumns.filter((columnName) => !columns.has(columnName));
+          if (missingColumns.length === 0) {
+            applyMigration.run(migration.version, new Date().toISOString());
+            return;
+          }
+          for (const columnName of missingColumns) {
+            const columnDefinitions: Record<string, string> = {
+              discount_type: "TEXT DEFAULT 'FIXED'",
+              discount_value_cents: 'INTEGER DEFAULT 0',
+              discount_percentage: 'REAL DEFAULT 0',
+              discount_amount_cents: 'INTEGER DEFAULT 0',
+              tax_enabled: 'INTEGER DEFAULT 0',
+              tax_rate_percent: 'REAL DEFAULT 0',
+              tax_amount_cents: 'INTEGER DEFAULT 0',
+              cash_expenses_cents: 'INTEGER DEFAULT 0',
+            };
+            database.exec(`ALTER TABLE sales_invoices ADD COLUMN ${columnName} ${columnDefinitions[columnName]};`);
+          }
+          database.exec(`
+            UPDATE sales_invoices SET discount_type = 'FIXED' WHERE discount_type IS NULL OR discount_type NOT IN ('FIXED', 'PERCENT');
+            UPDATE sales_invoices SET discount_value_cents = 0 WHERE discount_value_cents IS NULL;
+            UPDATE sales_invoices SET discount_percentage = 0 WHERE discount_percentage IS NULL;
+            UPDATE sales_invoices SET discount_amount_cents = COALESCE(discount_cents, 0) WHERE discount_amount_cents IS NULL;
+            UPDATE sales_invoices SET tax_enabled = 0 WHERE tax_enabled IS NULL;
+            UPDATE sales_invoices SET tax_rate_percent = 0 WHERE tax_rate_percent IS NULL;
+            UPDATE sales_invoices SET tax_amount_cents = COALESCE(tax_cents, 0) WHERE tax_amount_cents IS NULL;
+            UPDATE sales_invoices SET cash_expenses_cents = 0 WHERE cash_expenses_cents IS NULL;
+          `);
+        }
+      }
+      if (migration.version !== 7 && migration.version !== 9) {
+        database.exec(migration.sql);
+      }
       applyMigration.run(migration.version, new Date().toISOString());
     })();
   }

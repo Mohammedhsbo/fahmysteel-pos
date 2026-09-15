@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3';
+import { recordAudit } from '../audit.js';
 import { getProductById } from './catalog.js';
-import type { SalesInvoice, SalesInvoiceInput, SalesInvoiceItem, SalesInvoiceLineInput } from '../../../../shared/sales.js';
+import { calculateSalesInvoiceFinancials, type SalesInvoice, type SalesInvoiceInput, type SalesInvoiceItem, type SalesInvoiceLineInput } from '../../../../shared/sales.js';
 
 function normalizeSearch(search?: string): string {
   return `%${(search ?? '').trim()}%`;
@@ -24,6 +25,32 @@ function listInvoiceItems(database: Database.Database, invoiceId: number): Sales
   `).all(invoiceId) as SalesInvoiceItem[];
 }
 
+function coalesceSalesInvoiceRecord(row: any): SalesInvoice {
+  const discountType = row.discountType === 'PERCENT' ? 'PERCENT' : 'FIXED';
+  const discountValueCents = Number(row.discountValueCents ?? 0);
+  const discountPercentage = Number(row.discountPercentage ?? 0);
+  const taxEnabled = Boolean(Number(row.taxEnabled ?? 0));
+  const taxRatePercent = Number(row.taxRatePercent ?? 0);
+  const cashExpensesCents = Number(row.cashExpensesCents ?? 0);
+  const discountAmountCents = Number(row.discountAmountCents ?? row.discountCents ?? 0);
+  const taxAmountCents = Number(row.taxAmountCents ?? row.taxCents ?? 0);
+
+  return {
+    ...row,
+    discountType,
+    discountValueCents,
+    discountPercentage,
+    discountAmountCents,
+    discountCents: Number(row.discountCents ?? discountAmountCents),
+    taxEnabled,
+    taxRatePercent,
+    taxCents: Number(row.taxCents ?? taxAmountCents),
+    cashExpensesCents,
+    totalCents: Number(row.totalCents ?? row.finalTotalCents ?? 0),
+    paidCents: Number(row.paidCents ?? 0),
+  } as SalesInvoice;
+}
+
 export function listSalesInvoices(database: Database.Database, search?: string): SalesInvoice[] {
   const term = normalizeSearch(search);
   const rows = database.prepare(`
@@ -32,20 +59,34 @@ export function listSalesInvoices(database: Database.Database, search?: string):
       si.invoice_number AS invoiceNumber,
       si.customer_id AS customerId,
       c.name AS customerName,
+      c.phone AS customerPhone,
+      c.address AS customerAddress,
       si.cashier_id AS cashierId,
       si.shift_id AS shiftId,
       si.status,
       si.subtotal_cents AS subtotalCents,
+      si.discount_type AS discountType,
+      si.discount_value_cents AS discountValueCents,
+      si.discount_percentage AS discountPercentage,
+      si.discount_amount_cents AS discountAmountCents,
       si.discount_cents AS discountCents,
+      si.tax_enabled AS taxEnabled,
+      si.tax_rate_percent AS taxRatePercent,
       si.tax_cents AS taxCents,
+      si.tax_amount_cents AS taxAmountCents,
+      si.cash_expenses_cents AS cashExpensesCents,
       si.total_cents AS totalCents,
       si.paid_cents AS paidCents,
+      pm.code AS paymentMethodCode,
+      pm.name AS paymentMethodName,
+      si.card_last4 AS cardLast4,
       si.notes,
       si.issued_at AS issuedAt,
       si.created_at AS createdAt,
       si.updated_at AS updatedAt
     FROM sales_invoices si
     LEFT JOIN customers c ON c.id = si.customer_id
+    LEFT JOIN payment_methods pm ON pm.id = si.payment_method_id
     WHERE si.status != 'CANCELLED'
       AND (
         si.invoice_number LIKE ?
@@ -54,26 +95,9 @@ export function listSalesInvoices(database: Database.Database, search?: string):
       )
     ORDER BY si.issued_at DESC
     LIMIT 200
-  `).all(term, term, term) as Array<{
-    id: number;
-    invoiceNumber: string;
-    customerId: number | null;
-    customerName: string | null;
-    cashierId: number;
-    shiftId: number | null;
-    status: SalesInvoice['status'];
-    subtotalCents: number;
-    discountCents: number;
-    taxCents: number;
-    totalCents: number;
-    paidCents: number;
-    notes: string | null;
-    issuedAt: string;
-    createdAt: string;
-    updatedAt: string;
-  }>;
+  `).all(term, term, term) as Array<any>;
 
-  return rows.map((invoice) => ({ ...invoice, items: listInvoiceItems(database, invoice.id) }));
+  return rows.map((invoice) => ({ ...coalesceSalesInvoiceRecord(invoice), items: listInvoiceItems(database, invoice.id) }));
 }
 
 export function getSalesInvoiceById(database: Database.Database, invoiceId: number): SalesInvoice | null {
@@ -83,26 +107,40 @@ export function getSalesInvoiceById(database: Database.Database, invoiceId: numb
       si.invoice_number AS invoiceNumber,
       si.customer_id AS customerId,
       c.name AS customerName,
+      c.phone AS customerPhone,
+      c.address AS customerAddress,
       si.cashier_id AS cashierId,
       si.shift_id AS shiftId,
       si.status,
       si.subtotal_cents AS subtotalCents,
+      si.discount_type AS discountType,
+      si.discount_value_cents AS discountValueCents,
+      si.discount_percentage AS discountPercentage,
+      si.discount_amount_cents AS discountAmountCents,
       si.discount_cents AS discountCents,
+      si.tax_enabled AS taxEnabled,
+      si.tax_rate_percent AS taxRatePercent,
       si.tax_cents AS taxCents,
+      si.tax_amount_cents AS taxAmountCents,
+      si.cash_expenses_cents AS cashExpensesCents,
       si.total_cents AS totalCents,
       si.paid_cents AS paidCents,
+      pm.code AS paymentMethodCode,
+      pm.name AS paymentMethodName,
+      si.card_last4 AS cardLast4,
       si.notes,
       si.issued_at AS issuedAt,
       si.created_at AS createdAt,
       si.updated_at AS updatedAt
     FROM sales_invoices si
     LEFT JOIN customers c ON c.id = si.customer_id
+    LEFT JOIN payment_methods pm ON pm.id = si.payment_method_id
     WHERE si.id = ?
-  `).get(invoiceId) as SalesInvoice | undefined;
+  `).get(invoiceId) as any | undefined;
 
   if (!row) return null;
 
-  return { ...row, items: listInvoiceItems(database, invoiceId) };
+  return { ...coalesceSalesInvoiceRecord(row), items: listInvoiceItems(database, invoiceId) };
 }
 
 function makeInvoiceNumber(): string {
@@ -135,9 +173,25 @@ export function createSalesInvoice(database: Database.Database, input: SalesInvo
   }
 
   const paymentMethod = database.prepare(
-    'SELECT id FROM payment_methods WHERE id = COALESCE(?, (SELECT id FROM payment_methods WHERE code = ?)) AND is_active = 1'
-  ).get(input.paymentMethodId ?? null, 'CASH') as { id: number } | undefined;
+    'SELECT id, code FROM payment_methods WHERE id = COALESCE(?, (SELECT id FROM payment_methods WHERE code = ?)) AND is_active = 1'
+  ).get(input.paymentMethodId ?? null, 'CASH') as { id: number; code: string } | undefined;
   if (!paymentMethod) throw new Error('Invalid payment method.');
+
+  const cardNumber = input.cardNumber?.replace(/\s+/g, '') ?? '';
+  let cardLast4: string | null = null;
+  if (paymentMethod.code === 'VISA') {
+    if (!/^\d{12,19}$/.test(cardNumber)) throw new Error('Enter a valid card number.');
+    cardLast4 = cardNumber.slice(-4);
+  } else if (input.cardNumber) {
+    throw new Error('Card details are only valid for Visa payments.');
+  }
+  const settings = database.prepare(`
+    SELECT vodafone_cash_enabled AS vodafoneCashEnabled, instapay_enabled AS instaPayEnabled, visa_enabled AS visaEnabled
+    FROM payment_method_settings WHERE id = 1
+  `).get() as { vodafoneCashEnabled: number; instaPayEnabled: number; visaEnabled: number } | undefined;
+  if (paymentMethod.code === 'VODAFONE_CASH' && !settings?.vodafoneCashEnabled) throw new Error('Vodafone Cash is disabled.');
+  if (paymentMethod.code === 'INSTAPAY' && !settings?.instaPayEnabled) throw new Error('InstaPay is disabled.');
+  if (paymentMethod.code === 'VISA' && !settings?.visaEnabled) throw new Error('Visa / Card is disabled.');
 
   const normalizedItems = input.items.map(normalizeItem);
   let subtotal = 0;
@@ -156,8 +210,25 @@ export function createSalesInvoice(database: Database.Database, input: SalesInvo
     discount += lineDiscount;
   }
 
-  const tax = 0;
-  const total = Math.max(0, subtotal - discount + tax);
+  const financial = calculateSalesInvoiceFinancials({
+    subtotalCents: subtotal,
+    discountType: input.discountType ?? 'FIXED',
+    discountValueCents: input.discountType === 'FIXED' ? (input.discountValueCents ?? 0) : 0,
+    discountPercentage: input.discountType === 'PERCENT' ? (input.discountPercentage ?? 0) : 0,
+    taxEnabled: Boolean(input.taxEnabled),
+    taxRatePercent: input.taxRatePercent ?? 0,
+    cashExpensesCents: input.cashExpensesCents ?? 0,
+  });
+
+  if (financial.discountCents > subtotal) {
+    throw new Error('Discount cannot exceed the subtotal.');
+  }
+
+  if (financial.taxEnabled && financial.taxRatePercent > 100) {
+    throw new Error('Tax rate cannot exceed 100%.');
+  }
+
+  const total = financial.totalCents;
   const invoiceNumber = makeInvoiceNumber();
   const issuedAt = new Date().toISOString();
   const result = database.prepare(`
@@ -168,15 +239,25 @@ export function createSalesInvoice(database: Database.Database, input: SalesInvo
       shift_id,
       status,
       subtotal_cents,
+      discount_type,
+      discount_value_cents,
+      discount_percentage,
+      discount_amount_cents,
       discount_cents,
+      tax_enabled,
+      tax_rate_percent,
       tax_cents,
+      tax_amount_cents,
+      cash_expenses_cents,
       total_cents,
       paid_cents,
+      payment_method_id,
+      card_last4,
       notes,
       issued_at,
       created_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     invoiceNumber,
     input.customerId ?? null,
@@ -184,10 +265,20 @@ export function createSalesInvoice(database: Database.Database, input: SalesInvo
     input.shiftId ?? null,
     total > 0 ? 'PAID' : 'CANCELLED',
     subtotal,
-    discount,
-    tax,
+    financial.discountType,
+    financial.discountValueCents,
+    financial.discountPercentage,
+    financial.discountCents,
+    financial.discountCents,
+    financial.taxEnabled ? 1 : 0,
+    financial.taxRatePercent,
+    financial.taxCents,
+    financial.taxCents,
+    financial.cashExpensesCents,
     total,
     total,
+    paymentMethod.id,
+    cardLast4,
     input.notes?.trim() || null,
     issuedAt,
     issuedAt,
@@ -252,6 +343,26 @@ export function createSalesInvoice(database: Database.Database, input: SalesInvo
       ) VALUES ('SALE_PAYMENT', 'IN', ?, ?, 'sales_invoice', ?, ?, ?, ?)
     `).run(total, paymentMethod.id, invoiceId, input.cashierId, `Sale payment for ${invoiceNumber}`, issuedAt);
   }
+
+  const paymentNames: Record<string, string> = {
+    CASH: 'Cash',
+    VODAFONE_CASH: 'Vodafone Cash',
+    INSTAPAY: 'InstaPay',
+    VISA: 'Visa',
+  };
+  const paymentLabel = paymentMethod.code === 'VISA'
+    ? `Payment: Visa; Card: **** **** **** ${cardLast4}`
+    : `Payment: ${paymentNames[paymentMethod.code] ?? 'Cash'}`;
+  const auditText = [
+    `Payment: ${paymentLabel}`,
+    `Discount: ${financial.discountCents} cents`,
+    `Tax enabled: ${financial.taxEnabled ? 'yes' : 'no'}`,
+    `Tax rate: ${financial.taxRatePercent}%`,
+    `Tax amount: ${financial.taxCents} cents`,
+    `Cash expenses: ${financial.cashExpensesCents} cents`,
+    `Final total: ${financial.totalCents} cents`,
+  ].join('; ');
+  recordAudit(database, 'CREATE', 'SALE', invoiceId, auditText);
 
   return getSalesInvoiceById(database, invoiceId)!;
 }

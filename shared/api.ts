@@ -37,6 +37,7 @@ import type { CustomerApi, SupplierApi } from './contacts.js';
 import type { InventoryApi } from './inventory.js';
 import type { OperationsApi } from './operations.js';
 import type { PaymentsApi } from './payments.js';
+import type { PaymentMethodsApi } from './payment-methods.js';
 import type { PurchaseReturnsApi } from './purchase-returns.js';
 import type { PurchasesApi } from './purchases.js';
 import type { ReportsApi } from './reports.js';
@@ -53,6 +54,7 @@ export interface DesktopApi {
   inventory: InventoryApi;
   operations: OperationsApi;
   payments: PaymentsApi;
+  paymentMethods: PaymentMethodsApi;
   catalog: {
     listUnits: () => Promise<unknown[]>;
     listCategories: () => Promise<unknown[]>;

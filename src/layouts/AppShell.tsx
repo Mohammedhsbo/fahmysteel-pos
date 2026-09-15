@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react';
-import { BarChart3, Bell, Boxes, ChevronDown, ClipboardList, LayoutDashboard, LogOut, PackageSearch, Search, Settings, ShoppingCart, Users, WalletCards } from 'lucide-react';
+import { BarChart3, Bell, Boxes, ClipboardList, CreditCard, LayoutDashboard, LogOut, PackageSearch, Search, Settings, ShoppingCart, Users, WalletCards } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import type { SessionUser, SupportedLocale } from '../../shared/api';
 import { useI18n } from '../i18n';
@@ -50,6 +50,7 @@ export function AppShell({ appName, logoDataUrl, session, locale, onLocaleChange
           {session.role === 'ADMIN' && <>
             <NavLink to="/accounts" className="nav-item"><Users size={18} strokeWidth={1.8} /><span>{t('accounts')}</span></NavLink>
             <NavLink to="/settings" className="nav-item"><Settings size={18} strokeWidth={1.8} /><span>{t('settings')}</span></NavLink>
+            <NavLink to="/payment-methods" className="nav-item"><CreditCard size={18} strokeWidth={1.8} /><span>{t('paymentMethods')}</span></NavLink>
           </>}
           <button type="button" className="nav-item sidebar-logout" onClick={onLogout}><LogOut size={18} strokeWidth={1.8} /><span>{t('logout')}</span></button>
         </div>

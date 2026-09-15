@@ -13,10 +13,11 @@ function listReturnItems(database: Database.Database, returnId: number): SalesRe
       sri.return_id AS returnId,
       sri.original_item_id AS originalItemId,
       sri.product_id AS productId,
-      sri.product_name AS productName,
+      sii.product_name AS productName,
       sri.quantity,
       sri.refund_cents AS refundCents
     FROM sales_return_items sri
+    INNER JOIN sales_invoice_items sii ON sii.id = sri.original_item_id
     WHERE sri.return_id = ?
   `).all(returnId) as SalesReturnItem[];
 }

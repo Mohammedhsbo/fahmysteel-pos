@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.electron.json && vite build",
+    "test": "npm run build && npm run verify:database",
     "dist:win": "npm run build && electron-builder --win",
     "verify:database": "node scripts/verify-database.mjs"
   },

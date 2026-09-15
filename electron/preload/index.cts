@@ -31,6 +31,9 @@ const api: DesktopApi = {
   inventory: {
     adjustStock: (input) => ipcRenderer.invoke('inventory:adjust-stock', input),
     listAdjustments: () => ipcRenderer.invoke('inventory:list-adjustments'),
+    getStocktakingReport: () => ipcRenderer.invoke('inventory:get-stocktaking-report'),
+    printStocktakingReport: (report) => ipcRenderer.invoke('inventory:print-stocktaking-report', report),
+    saveStocktakingReportPdf: (report) => ipcRenderer.invoke('inventory:save-stocktaking-report-pdf', report),
   },
   operations: {
     listAuditLogs: (search) => ipcRenderer.invoke('operations:list-audit-logs', search),
@@ -40,6 +43,11 @@ const api: DesktopApi = {
   },
   payments: {
     createPayment: (input) => ipcRenderer.invoke('payments:create', input),
+  },
+  paymentMethods: {
+    getSettings: () => ipcRenderer.invoke('payment-methods:get-settings'),
+    updateSettings: (input) => ipcRenderer.invoke('payment-methods:update-settings', input),
+    listSalesOptions: () => ipcRenderer.invoke('payment-methods:list-sales-options'),
   },
   catalog: {
     listUnits: () => ipcRenderer.invoke('catalog:list-units'),

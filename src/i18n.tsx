@@ -5,7 +5,7 @@ type TranslationKey =
   | 'dashboard' | 'sales' | 'returns' | 'inventory' | 'stockAdjustments' | 'purchases'
   | 'purchaseReturns' | 'customers' | 'suppliers' | 'treasury' | 'reports' | 'operations'
   | 'accounts' | 'settings' | 'logout' | 'workspace' | 'overview' | 'offlineWorkspace'
-  | 'steelOperations' | 'language' | 'english' | 'arabic' | 'secureLocalAccess'
+  | 'steelOperations' | 'paymentMethods' | 'language' | 'english' | 'arabic' | 'secureLocalAccess'
   | 'createAdministrator' | 'welcomeBack' | 'setupAdmin' | 'signInContinue'
   | 'username' | 'displayName' | 'password' | 'checking' | 'createAccount' | 'signIn'
   | 'credentialsLocal' | 'goodMorning' | 'liveOverview' | 'refresh' | 'analytics'
@@ -14,14 +14,47 @@ type TranslationKey =
 
 const dictionary: Record<SupportedLocale, Record<TranslationKey, string>> = {
   en: {
-    dashboard: 'Dashboard', sales: 'Sales / POS', returns: 'Returns', inventory: 'Inventory', stockAdjustments: 'Stock adjustments', purchases: 'Purchases', purchaseReturns: 'Purchase returns', customers: 'Customers', suppliers: 'Suppliers', treasury: 'Treasury', reports: 'Reports', operations: 'Operations', accounts: 'Account management', settings: 'Settings', logout: 'Log out', workspace: 'Workspace', overview: 'Overview', offlineWorkspace: 'Offline workspace', steelOperations: 'Steel operations', language: 'Language', english: 'English', arabic: 'Arabic', secureLocalAccess: 'Secure local access', createAdministrator: 'Create administrator', welcomeBack: 'Welcome back.', setupAdmin: 'Set up the first administrator account for this offline workspace.', signInContinue: 'Sign in to continue to your workspace.', username: 'Username', displayName: 'Display name', password: 'Password', checking: 'Checking...', createAccount: 'Create account', signIn: 'Sign in', credentialsLocal: 'Credentials are stored locally and never sent to a server.', goodMorning: 'Good morning.', liveOverview: 'A live view of your local steel operations.', refresh: 'Refresh', analytics: 'Analytics', operationalSummary: 'Operational summary built from the local SQLite ledger.', salesTotal: 'Sales', inventoryValue: 'Inventory', treasuryFlow: 'Treasury flow', recentTreasuryActivity: 'Recent treasury activity', noTreasuryActivity: 'No treasury activity recorded yet.',
+    dashboard: 'Dashboard', sales: 'Sales / POS', returns: 'Returns', inventory: 'Inventory', stockAdjustments: 'Stock adjustments', purchases: 'Purchases', purchaseReturns: 'Purchase returns', customers: 'Customers', suppliers: 'Suppliers', treasury: 'Treasury', reports: 'Reports', operations: 'Operations', accounts: 'Account management', settings: 'Settings', logout: 'Log out', workspace: 'Workspace', overview: 'Overview', offlineWorkspace: 'Offline workspace', steelOperations: 'Steel operations', paymentMethods: 'Payment Methods', language: 'Language', english: 'English', arabic: 'Arabic', secureLocalAccess: 'Secure local access', createAdministrator: 'Create administrator', welcomeBack: 'Welcome back.', setupAdmin: 'Set up the first administrator account for this offline workspace.', signInContinue: 'Sign in to continue to your workspace.', username: 'Username', displayName: 'Display name', password: 'Password', checking: 'Checking...', createAccount: 'Create account', signIn: 'Sign in', credentialsLocal: 'Credentials are stored locally and never sent to a server.', goodMorning: 'Good morning.', liveOverview: 'A live view of your local steel operations.', refresh: 'Refresh', analytics: 'Analytics', operationalSummary: 'Operational summary built from the local SQLite ledger.', salesTotal: 'Sales', inventoryValue: 'Inventory', treasuryFlow: 'Treasury flow', recentTreasuryActivity: 'Recent treasury activity', noTreasuryActivity: 'No treasury activity recorded yet.',
   },
   ar: {
-    dashboard: 'لوحة التحكم', sales: 'المبيعات / نقطة البيع', returns: 'المرتجعات', inventory: 'المخزون', stockAdjustments: 'تسويات المخزون', purchases: 'المشتريات', purchaseReturns: 'مرتجعات المشتريات', customers: 'العملاء', suppliers: 'الموردون', treasury: 'الخزينة', reports: 'التقارير', operations: 'العمليات', accounts: 'إدارة الحسابات', settings: 'الإعدادات', logout: 'تسجيل الخروج', workspace: 'مساحة العمل', overview: 'نظرة عامة', offlineWorkspace: 'مساحة عمل غير متصلة', steelOperations: 'عمليات الحديد', language: 'اللغة', english: 'English', arabic: 'العربية', secureLocalAccess: 'دخول محلي آمن', createAdministrator: 'إنشاء مدير', welcomeBack: 'مرحباً بعودتك.', setupAdmin: 'أنشئ حساب المدير الأول لمساحة العمل غير المتصلة.', signInContinue: 'سجل الدخول للمتابعة إلى مساحة العمل.', username: 'اسم المستخدم', displayName: 'الاسم الظاهر', password: 'كلمة المرور', checking: 'جارٍ التحقق...', createAccount: 'إنشاء الحساب', signIn: 'تسجيل الدخول', credentialsLocal: 'يتم تخزين بيانات الدخول محلياً ولا يتم إرسالها إلى أي خادم.', goodMorning: 'صباح الخير.', liveOverview: 'نظرة مباشرة على عمليات الحديد المحلية.', refresh: 'تحديث', analytics: 'التحليلات', operationalSummary: 'ملخص العمليات من سجل SQLite المحلي.', salesTotal: 'المبيعات', inventoryValue: 'قيمة المخزون', treasuryFlow: 'حركة الخزينة', recentTreasuryActivity: 'آخر حركة للخزينة', noTreasuryActivity: 'لا توجد حركة خزينة مسجلة بعد.',
+    dashboard: 'لوحة التحكم', sales: 'المبيعات / نقطة البيع', returns: 'المرتجعات', inventory: 'المخزون', stockAdjustments: 'تسويات المخزون', purchases: 'المشتريات', purchaseReturns: 'مرتجعات المشتريات', customers: 'العملاء', suppliers: 'الموردون', treasury: 'الخزينة', reports: 'التقارير', operations: 'العمليات', accounts: 'إدارة الحسابات', settings: 'الإعدادات', logout: 'تسجيل الخروج', workspace: 'مساحة العمل', overview: 'نظرة عامة', offlineWorkspace: 'مساحة عمل غير متصلة', steelOperations: 'عمليات الحديد', paymentMethods: 'طرق الدفع', language: 'اللغة', english: 'English', arabic: 'العربية', secureLocalAccess: 'دخول محلي آمن', createAdministrator: 'إنشاء مدير', welcomeBack: 'مرحباً بعودتك.', setupAdmin: 'أنشئ حساب المدير الأول لمساحة العمل غير المتصلة.', signInContinue: 'سجل الدخول للمتابعة إلى مساحة العمل.', username: 'اسم المستخدم', displayName: 'الاسم الظاهر', password: 'كلمة المرور', checking: 'جارٍ التحقق...', createAccount: 'إنشاء الحساب', signIn: 'تسجيل الدخول', credentialsLocal: 'يتم تخزين بيانات الدخول محلياً ولا يتم إرسالها إلى أي خادم.', goodMorning: 'صباح الخير.', liveOverview: 'نظرة مباشرة على عمليات الحديد المحلية.', refresh: 'تحديث', analytics: 'التحليلات', operationalSummary: 'ملخص العمليات من سجل SQLite المحلي.', salesTotal: 'المبيعات', inventoryValue: 'قيمة المخزون', treasuryFlow: 'حركة الخزينة', recentTreasuryActivity: 'آخر حركة للخزينة', noTreasuryActivity: 'لا توجد حركة خزينة مسجلة بعد.',
   },
 };
 
 const uiTranslations: Record<string, string> = {
+  'Loading secure workspace...': 'جارٍ تحميل مساحة العمل الآمنة...',
+  'Company logo': 'شعار الشركة',
+  'Primary navigation': 'التنقل الرئيسي',
+  'Quick search...': 'بحث سريع...',
+  'Payment Methods': 'طرق الدفع',
+  'Notifications': 'الإشعارات',
+  'Close': 'إغلاق',
+  'Administration': 'الإدارة',
+  'Configure the payment options available at checkout and view active methods.': 'إعداد طرق الدفع المتاحة عند إتمام البيع وعرض الطرق النشطة.',
+  'Accept mobile wallet payments': 'قبول مدفوعات المحافظ الإلكترونية',
+  'Vodafone Cash Number': 'رقم فودافون كاش',
+  'Direct bank transfers instantly': 'تحويلات بنكية مباشرة وفورية',
+  'InstaPay Account / Number': 'حساب أو رقم إنستا باي',
+  'Accept credit and debit cards': 'قبول بطاقات الائتمان والخصم',
+  'Last updated': 'آخر تحديث',
+  'Save Configuration': 'حفظ الإعدادات',
+  'Active Payment Methods at Checkout': 'طرق الدفع النشطة عند إتمام البيع',
+  'Method Code': 'رمز الطريقة',
+  'Display Name': 'الاسم الظاهر',
+  'Associated Number / Account': 'الرقم أو الحساب المرتبط',
+  'Not applicable': 'غير منطبق',
+  'No active payment methods found.': 'لم يتم العثور على طرق دفع نشطة.',
+  'Enable methods above to use them at checkout.': 'فعّل الطرق أعلاه لاستخدامها عند إتمام البيع.',
+  'Vodafone Cash': 'فودافون كاش',
+  'InstaPay': 'إنستا باي',
+  'Visa / MasterCard': 'فيزا / ماستركارد',
+  'Cash': 'نقدي',
+  'Unable to load payment methods.': 'تعذر تحميل طرق الدفع.',
+  'Payment methods saved successfully.': 'تم حفظ طرق الدفع بنجاح.',
+  'Unable to save payment methods.': 'تعذر حفظ طرق الدفع.',
+  'Update Failed': 'فشل التحديث',
+  'e.g. 010XXXXXXXX': 'مثال: 010XXXXXXXX',
+  'username@instapay or 01XXXXXXXXX': 'username@instapay أو 01XXXXXXXXX',
   'Control panel': 'لوحة التحكم',
   'Create and maintain local users, roles, and access for the offline POS workspace.': 'إنشاء وإدارة المستخدمين والأدوار والصلاحيات لمساحة العمل غير المتصلة.',
   'Create user': 'إنشاء مستخدم', 'Save user': 'حفظ المستخدم', 'Reset password': 'إعادة تعيين كلمة المرور', 'New password': 'كلمة المرور الجديدة',
@@ -78,8 +111,8 @@ function translateRenderedUi(locale: SupportedLocale): void {
 }
 
 const I18nContext = createContext<{ locale: SupportedLocale; t: (key: TranslationKey) => string }>({
-  locale: 'en',
-  t: (key) => dictionary.en[key],
+  locale: 'ar',
+  t: (key) => dictionary.ar[key],
 });
 
 export function I18nProvider({ locale, children }: PropsWithChildren<{ locale: SupportedLocale }>) {

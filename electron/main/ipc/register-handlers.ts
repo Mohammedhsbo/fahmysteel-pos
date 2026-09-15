@@ -4,7 +4,7 @@ import { createBackup, listBackups, restoreBackup } from '../backups.js';
 import { getDatabase } from '../database/connection.js';
 import { listLowStock } from '../database/repositories/inventory-alerts.js';
 import { listPayables, listReceivables } from '../database/repositories/balances.js';
-import { adjustStock, listAdjustments } from '../database/repositories/inventory.js';
+import { adjustStock, getStocktakingReport, listAdjustments } from '../database/repositories/inventory.js';
 import { createUser, listSettings, listUsers, resetPassword, setSetting, updateUser } from '../database/repositories/admin.js';
 import { archiveCategory, archiveProduct, createCategory, createProduct, listCategories, listProducts, listUnits, updateCategory, updateProduct } from '../database/repositories/catalog.js';
 import {
@@ -28,13 +28,16 @@ import { exportReportsCsv } from '../reports-export.js';
 import { createSalesReturn, listSalesReturns } from '../database/repositories/returns.js';
 import { createSalesInvoice, getSalesInvoiceById, listSalesInvoices } from '../database/repositories/sales.js';
 import { printSalesInvoice } from '../print-invoice.js';
+import { printInventoryStocktakingReport, saveInventoryStocktakingReportPdf } from '../inventory-report.js';
 import { createExpense, listPaymentMethods, listTransactions } from '../database/repositories/treasury.js';
+import { getPaymentMethodSettings, listSalesPaymentMethods, updatePaymentMethodSettings } from '../database/repositories/payment-methods.js';
 import { hasPermission, requirePermission } from '../rbac.js';
 import type { AppInfo } from '../../../shared/api.js';
 import type { CatalogProductInput } from '../../../shared/catalog.js';
 import type { PartyInput } from '../../../shared/contacts.js';
 import type { PurchaseInvoiceInput } from '../../../shared/purchases.js';
 import type { SalesInvoiceInput } from '../../../shared/sales.js';
+import type { PaymentMethodSettingsInput } from '../../../shared/payment-methods.js';
 
 export function registerIpcHandlers(): void {
   ipcMain.handle('app:get-info', (): AppInfo => {
@@ -116,6 +119,22 @@ export function registerIpcHandlers(): void {
     return setSetting(getDatabase(), key, value);
   });
 
+  ipcMain.handle('payment-methods:get-settings', () => {
+    requirePermission(getDatabase(), 'sales.payment-methods.manage');
+    return getPaymentMethodSettings(getDatabase());
+  });
+
+  ipcMain.handle('payment-methods:update-settings', (_event, input: unknown) => {
+    requirePermission(getDatabase(), 'sales.payment-methods.manage');
+    if (!input || typeof input !== 'object') throw new Error('Invalid payment method settings payload.');
+    return updatePaymentMethodSettings(getDatabase(), input as PaymentMethodSettingsInput);
+  });
+
+  ipcMain.handle('payment-methods:list-sales-options', () => {
+    requirePermission(getDatabase(), 'sales.payment-methods.view');
+    return listSalesPaymentMethods(getDatabase());
+  });
+
   ipcMain.handle('balances:list-receivables', () => {
     requirePermission(getDatabase(), 'treasury.view');
     return listReceivables(getDatabase());
@@ -145,6 +164,23 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('inventory:list-adjustments', () => {
     requirePermission(getDatabase(), 'inventory.view');
     return listAdjustments(getDatabase());
+  });
+
+  ipcMain.handle('inventory:get-stocktaking-report', () => {
+    requirePermission(getDatabase(), 'inventory.view');
+    return getStocktakingReport(getDatabase());
+  });
+
+  ipcMain.handle('inventory:print-stocktaking-report', async (_event, report: unknown) => {
+    requirePermission(getDatabase(), 'inventory.view');
+    if (!report || typeof report !== 'object') throw new Error('Invalid stocktaking report payload.');
+    await printInventoryStocktakingReport(report as Parameters<typeof printInventoryStocktakingReport>[0]);
+  });
+
+  ipcMain.handle('inventory:save-stocktaking-report-pdf', async (_event, report: unknown) => {
+    requirePermission(getDatabase(), 'inventory.view');
+    if (!report || typeof report !== 'object') throw new Error('Invalid stocktaking report payload.');
+    return saveInventoryStocktakingReportPdf(report as Parameters<typeof saveInventoryStocktakingReportPdf>[0]);
   });
 
   ipcMain.handle('inventory:adjust-stock', (_event, input: unknown) => {
@@ -195,8 +231,8 @@ export function registerIpcHandlers(): void {
     requirePermission(getDatabase(), 'inventory.manage');
     if (!input || typeof input !== 'object') throw new Error('Invalid product payload.');
     const payload = input as Partial<CatalogProductInput>;
-    if (!payload.sku || !payload.name || !payload.nameAr || !payload.unitId) {
-      throw new Error('Product SKU, name, Arabic name, and unit are required.');
+    if (!payload.name || !payload.nameAr || !payload.unitId) {
+      throw new Error('Product name, Arabic name, and unit are required.');
     }
     return createProduct(getDatabase(), payload as CatalogProductInput);
   });

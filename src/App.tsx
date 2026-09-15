@@ -8,10 +8,13 @@ import { AppShell } from './layouts/AppShell';
 import { CatalogPage } from './pages/CatalogPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { InventoryAdjustmentsPage } from './pages/InventoryAdjustmentsPage';
+import { InvoicePage } from './pages/InvoicePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { OperationsPage } from './pages/OperationsPage';
+import { PaymentMethodsPage } from './pages/PaymentMethodsPage';
 import { PurchasesPage } from './pages/PurchasesPage';
+import { ProductDetailsPage } from './pages/ProductDetailsPage';
 import { PurchaseReturnsPage } from './pages/PurchaseReturnsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { ReturnsPage } from './pages/ReturnsPage';
@@ -23,13 +26,13 @@ import { TreasuryPage } from './pages/TreasuryPage';
 export default function App() {
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
   const [authState, setAuthState] = useState<AuthState | null>(null);
-  const [locale, setLocale] = useState<SupportedLocale>(() => localStorage.getItem('fahmy-steel-locale') === 'ar' ? 'ar' : 'en');
+  const [locale, setLocale] = useState<SupportedLocale>(() => localStorage.getItem('fahmy-steel-locale') === 'en' ? 'en' : 'ar');
 
   useEffect(() => {
     void Promise.all([window.api.getAppInfo(), window.api.auth.getState()]).then(([info, state]) => {
       setAppInfo(info);
       setAuthState(state);
-      if (!localStorage.getItem('fahmy-steel-locale')) setLocale(info.locale);
+      if (!localStorage.getItem('fahmy-steel-locale')) setLocale('ar');
     });
   }, []);
 
@@ -72,17 +75,20 @@ export default function App() {
             <Routes>
               {isAdmin && <Route path="/" element={<DashboardPage />} />}
               <Route path="/sales" element={<SalesPage />} />
+              <Route path="/sales/invoices/:invoiceId" element={<InvoicePage />} />
               <Route path="/customers" element={<CustomersPage />} />
               <Route path="/returns" element={<ReturnsPage />} />
               {isAdmin && <>
                 <Route path="/purchases" element={<PurchasesPage />} />
                 <Route path="/purchase-returns" element={<PurchaseReturnsPage />} />
                 <Route path="/inventory" element={<CatalogPage />} />
+                <Route path="/inventory/products/:productId" element={<ProductDetailsPage />} />
                 <Route path="/inventory-adjustments" element={<InventoryAdjustmentsPage />} />
                 <Route path="/suppliers" element={<SuppliersPage />} />
                 <Route path="/treasury" element={<TreasuryPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/operations" element={<OperationsPage />} />
+                <Route path="/payment-methods" element={<PaymentMethodsPage />} />
                 <Route path="/accounts" element={<AccountManagementPage />} />
                 <Route path="/settings" element={<SettingsPage onBrandingSaved={refreshAppInfo} />} />
               </>}

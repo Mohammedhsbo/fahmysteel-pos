@@ -18,16 +18,38 @@ export function seedFoundation(database: Database.Database): void {
   insertUnit.run('TON', 'Ton', 'طن', now, now);
   insertUnit.run('KILOGRAM', 'Kilogram', 'كيلوجرام', now, now);
   insertUnit.run('METER', 'Meter', 'متر', now, now);
+  insertUnit.run('SHEET', 'Sheet', 'لوح / شيت', now, now);
   insertUnit.run('BUNDLE', 'Bundle', 'ربطة', now, now);
+
+  const insertCategory = database.prepare(`
+    INSERT INTO categories (name, name_ar, description, is_active, created_at, updated_at)
+    SELECT ?, ?, ?, 1, ?, ?
+    WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name_ar = ?)
+  `);
+  for (const category of [
+    ['Boxes', 'علب', 'Steel box sections'],
+    ['Angles', 'زوايا', 'Steel angles'],
+    ['Sheets', 'صاج', 'Steel sheets'],
+    ['Flat Bars', 'خوص', 'Steel flat bars'],
+    ['Pipes', 'مواسير', 'Steel pipes'],
+    ['Sections', 'قطاعات', 'Steel sections'],
+    ['Other', 'أخرى', 'Other steel products'],
+  ]) insertCategory.run(...category, now, now, category[1]);
 
   const insertPaymentMethod = database.prepare(`
     INSERT OR IGNORE INTO payment_methods (code, name, is_system, created_at, updated_at)
     VALUES (?, ?, 1, ?, ?)
   `);
   insertPaymentMethod.run('CASH', 'Cash', now, now);
-  insertPaymentMethod.run('CARD', 'Card', now, now);
+  insertPaymentMethod.run('VODAFONE_CASH', 'Vodafone Cash', now, now);
+  insertPaymentMethod.run('INSTAPAY', 'InstaPay', now, now);
+  insertPaymentMethod.run('VISA', 'Visa / Card', now, now);
   insertPaymentMethod.run('BANK_TRANSFER', 'Bank transfer', now, now);
   insertPaymentMethod.run('CREDIT', 'Credit', now, now);
+  database.prepare(`
+    INSERT OR IGNORE INTO payment_method_settings (id, updated_at)
+    VALUES (1, ?)
+  `).run(now);
 
   const permissions = [
     ['dashboard.view', 'View dashboard'],
@@ -37,6 +59,7 @@ export function seedFoundation(database: Database.Database): void {
     ['sales.products.view', 'View products for sales'],
     ['sales.customers.view', 'View customers for sales'],
     ['sales.payment-methods.view', 'View payment methods for sales'],
+    ['sales.payment-methods.manage', 'Manage sales payment methods'],
     ['returns.view', 'View sales returns'],
     ['returns.manage', 'Manage sales returns'],
     ['inventory.view', 'View inventory'],

@@ -36,12 +36,26 @@ export type CatalogProduct = {
   sellingPriceCents: number;
   minimumStockQuantity: number;
   currentStockQuantity: number;
+  steelType: string | null;
+  shape: string | null;
+  widthMm: number | null;
+  heightMm: number | null;
+  thicknessMm: number | null;
+  lengthM: number | null;
+  weightPerPieceKg: number | null;
+  weightPerMeterKg: number | null;
+  weightPerSheetKg: number | null;
+  sellingPricePerKgCents: number | null;
+  sellingPricePerPieceCents: number | null;
+  sellingPricePerMeterCents: number | null;
+  totalWeightKg: number;
+  stockValueCents: number;
   isActive: boolean;
   archivedAt: string | null;
 };
 
 export type CatalogProductInput = {
-  sku: string;
+  sku?: string;
   barcode?: string | null;
   name: string;
   nameAr: string;
@@ -52,6 +66,19 @@ export type CatalogProductInput = {
   purchasePriceCents: number;
   sellingPriceCents: number;
   minimumStockQuantity: number;
+  currentStockQuantity?: number;
+  steelType?: string | null;
+  shape?: string | null;
+  widthMm?: number | null;
+  heightMm?: number | null;
+  thicknessMm?: number | null;
+  lengthM?: number | null;
+  weightPerPieceKg?: number | null;
+  weightPerMeterKg?: number | null;
+  weightPerSheetKg?: number | null;
+  sellingPricePerKgCents?: number | null;
+  sellingPricePerPieceCents?: number | null;
+  sellingPricePerMeterCents?: number | null;
 };
 
 export interface CatalogApi {

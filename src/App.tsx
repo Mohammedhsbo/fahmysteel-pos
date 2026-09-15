@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import type { AppInfo, AuthState, SessionUser, SupportedLocale } from '../shared/api';
 import { ToastProvider } from './components/ToastProvider';
 import { I18nProvider } from './i18n';
@@ -60,7 +60,7 @@ export default function App() {
 
     return (
       <div className="app-root" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-        <BrowserRouter>
+        <HashRouter>
           <AppShell
             appName={appInfo?.name ?? 'Fahmy Steel'}
             logoDataUrl={appInfo?.logoDataUrl ?? null}
@@ -89,7 +89,7 @@ export default function App() {
               <Route path="*" element={<Navigate to={isAdmin ? '/' : '/sales'} replace />} />
             </Routes>
           </AppShell>
-        </BrowserRouter>
+        </HashRouter>
       </div>
     );
   })();

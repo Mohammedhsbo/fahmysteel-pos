@@ -27,7 +27,8 @@ function createWindow(): void {
   if (process.env.VITE_DEV_SERVER_URL) {
     void mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
-    void mainWindow.loadFile(path.join(currentDirectory, '../../../dist/index.html'));
+    const rendererPath = path.join(app.getAppPath(), 'dist-renderer', 'index.html');
+    void mainWindow.loadFile(rendererPath);
   }
 }
 
